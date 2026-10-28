@@ -23,15 +23,17 @@ from orvyen.reporters.pdf_reporter import PDFReporter
 from orvyen.reporters.sarif_reporter import SARIFReporter
 
 # Terminal styling primitives
-CYAN = "\033[38;5;44m" if os.environ.get("COLORTERM") else "\033[36m"
-WHITE = "\033[38;5;255m" if os.environ.get("COLORTERM") else "\033[97m"
-GREEN = "\033[38;5;40m" if os.environ.get("COLORTERM") else "\033[32m"
-YELLOW = "\033[38;5;214m" if os.environ.get("COLORTERM") else "\033[33m"
-RED = "\033[38;5;196m" if os.environ.get("COLORTERM") else "\033[31m"
-GRAY = "\033[38;5;244m" if os.environ.get("COLORTERM") else "\033[90m"
-BOLD = "\033[1m"
-DIM = "\033[2m"
-RESET = "\033[0m"
+from orvyen.reporters.console import (
+    fg, bg, WHITE, GRAY_MUTED, GRAY_DARK, GRAY_LIGHT,
+    GREEN_ACCENT, CYAN_ACCENT, RED_ACCENT, AMBER_ACCENT,
+    RESET, BOLD, DIM,
+)
+
+CYAN = CYAN_ACCENT
+GREEN = GREEN_ACCENT
+RED = RED_ACCENT
+GRAY = GRAY_MUTED
+YELLOW = AMBER_ACCENT
 
 
 def build_parser() -> argparse.ArgumentParser:
