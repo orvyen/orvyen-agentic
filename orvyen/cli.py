@@ -205,31 +205,14 @@ def interactive_loop(
             engine = ScanEngine(curr_target)
             res = engine.run()
             res.aibom = AIBOMCompiler.compile(res)
-            md = AIBOMCompiler.to_markdown(res.aibom, license_key=license_key)
-            print()
-            print(md)
-            print()
+            ConsoleReporter.print_aibom(res.aibom, utf8=is_fancy)
 
         elif cmd in ("/compliance", "compliance"):
             engine = ScanEngine(curr_target)
             res = engine.run()
             imda = IMDAComplianceEvaluator.evaluate(res.findings)
             owasp = OWASPComplianceEvaluator.evaluate(res.findings)
-            print()
-            print(f"{BOLD}{WHITE}Singapore IMDA AI Governance Matrix:{RESET}")
-            print(f"  Overall Status:  {GREEN if imda['overall_status']=='COMPLIANT' else RED}{imda['overall_status']}{RESET} ({imda.get('score_percentage', 0)}% aligned)")
-            for p_name, p_data in imda.get("pillars", {}).items():
-                p_status = p_data.get("status")
-                p_color = GREEN if p_status == "COMPLIANT" else (YELLOW if p_status == "WARNING" else RED)
-                print(f"  {WHITE}{p_name}:{RESET} {p_color}{p_status}{RESET} ({p_data.get('passed_rules', 0)}/{len(p_data.get('rules', []))} rules pass)")
-            print()
-            print(f"{BOLD}{WHITE}OWASP Top 10 for LLM Applications (2025):{RESET}")
-            print(f"  Overall Status:  {GREEN if owasp['overall_status']=='PASS' else RED}{owasp['overall_status']}{RESET} ({owasp.get('score_percentage', 0)}% category pass)")
-            for item in owasp.get("categories", []):
-                cat_status = item.get("status")
-                cat_color = GREEN if cat_status == "PASS" else RED
-                print(f"  {WHITE}{item.get('code')}: {item.get('title')}{RESET} -> {cat_color}{cat_status}{RESET}")
-            print()
+            ConsoleReporter.print_compliance(imda, owasp, utf8=is_fancy)
 
         elif cmd in ("/help", "help"):
             print()

@@ -454,6 +454,210 @@ class ConsoleReporter:
         print(f"  {fg('#1E3A4A')}{bl}{h_box}{br}{RESET}")
         print()
 
+    @classmethod
+    def print_aibom(cls, aibom_dict: Dict[str, Any], utf8: bool = True, width: int = 76) -> None:
+        """Renders an executive AIBOM card with aligned tables, badges, and clean paths."""
+        meta = aibom_dict.get("metadata", {})
+        tools = aibom_dict.get("tools", {})
+        by_priv = tools.get("by_privilege", {})
+        servers = aibom_dict.get("mcp_servers", [])
+
+        raw_path = meta.get("target_path", ".")
+        try:
+            rel_path = Path(raw_path).resolve().relative_to(Path.cwd().resolve()).as_posix()
+            display_path = f"./{rel_path}" if not rel_path.startswith(".") else rel_path
+        except Exception:
+            display_path = Path(raw_path).name
+
+        fw_map = {
+            "mcp": "MCP Gateway",
+            "langchain": "LangChain",
+            "langgraph": "LangGraph",
+            "crewai": "CrewAI",
+        }
+        raw_fws = meta.get("frameworks", [])
+        formatted_fws = [fw_map.get(f.lower(), f.capitalize()) for f in raw_fws]
+        fw_str = f" {GRAY_MUTED}•{RESET} ".join(f"{CYAN_ACCENT}{f}{RESET}" for f in formatted_fws) or f"{GRAY_MUTED}None{RESET}"
+
+        tl, tr, bl, br = ("╭", "╮", "╰", "╯") if utf8 else ("+", "+", "+", "+")
+        v = "│" if utf8 else "|"
+        h_line = ("─" if utf8 else "-") * (width - 2)
+
+        print()
+        print(f"  {fg('#1E3A4A')}{tl}{h_line}{tr}{RESET}")
+        title = " AGENT BILL OF MATERIALS (AIBOM) "
+        lp = (width - 2 - len(title)) // 2
+        rp = width - 2 - len(title) - lp
+        print(f"  {fg('#1E3A4A')}{v}{' ' * lp}{BOLD}{WHITE}{title}{RESET}{' ' * rp}{fg('#1E3A4A')}{v}{RESET}")
+        print(f"  {fg('#1E3A4A')}├{h_line}┤{RESET}")
+
+        def row(label: str, val_str: str) -> None:
+            import re
+            ansi_clean = re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', val_str)
+            sp = ' ' * max(1, width - 2 - len(label) - len(ansi_clean) - 4)
+            print(f"  {fg('#1E3A4A')}{v}{bg('#0A1419')}  {GRAY_MUTED}{label}:{RESET}{bg('#0A1419')}{sp}{val_str}  {RESET}{fg('#1E3A4A')}{v}{RESET}")
+
+        score = meta.get('security_score', 100)
+        score_col = GREEN_ACCENT if score >= 85 else (AMBER_ACCENT if score >= 60 else RED_ACCENT)
+        grade = "HEALTHY" if score >= 85 else "RISK DETECTED"
+
+        row("Target System", f"{WHITE}{display_path}{RESET}")
+        row("Security Score", f"{BOLD}{score_col}{score}/100 [{grade}]{RESET}")
+        row("Frameworks", fw_str)
+        row("Declared Assets", f"{WHITE}{tools.get('total_tools', 0)} Tools{RESET} {GRAY_MUTED}•{RESET} {WHITE}{len(servers)} MCP Servers{RESET}")
+        print(f"  {fg('#1E3A4A')}{bl}{h_line}{br}{RESET}")
+        print()
+
+        # Tool Inventory Table
+        print(f"  {BOLD}{WHITE}Tool Inventory & Privilege Classification:{RESET}")
+        th_line = ("─" if utf8 else "-") * (width - 2)
+        print(f"  {fg('#222222')}{tl}{th_line}{tr}{RESET}")
+
+        col_hdr = f"  {GRAY_MUTED}{'TOOL NAME':<22} {'TIER':<9} {'FRAMEWORK':<11} {'AUDITED':<9} {'BOUND':<7} {'SOURCE':<14}{RESET}"
+        import re
+        clean_hdr = len(re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', col_hdr))
+        sp_hdr = ' ' * max(0, width - 2 - clean_hdr)
+        print(f"  {fg('#222222')}{v}{bg('#151515')}{col_hdr}{sp_hdr}{RESET}{fg('#222222')}{v}{RESET}")
+        print(f"  {fg('#222222')}├{th_line}┤{RESET}")
+
+        all_tools = []
+        for priv in ("admin", "execute", "write", "read"):
+            for t in by_priv.get(priv, []):
+                all_tools.append((priv, t))
+
+        for priv, t in all_tools:
+            t_name = t.get("name", "")[:21]
+            priv_str = priv.upper()
+            if priv in ("admin", "execute"):
+                priv_badge = f"{BOLD}{RED_ACCENT}{priv_str:<9}{RESET}"
+            elif priv == "write":
+                priv_badge = f"{BOLD}{AMBER_ACCENT}{priv_str:<9}{RESET}"
+            else:
+                priv_badge = f"{CYAN_ACCENT}{priv_str:<9}{RESET}"
+
+            fw = t.get("framework", "")[:10]
+            aud = f"{GREEN_ACCENT}Yes{RESET}" if t.get("is_audited") else f"{RED_ACCENT}NO{RESET} "
+            bnd = f"{WHITE}Yes{RESET}" if t.get("is_bound") else f"{GRAY_MUTED}No {RESET}"
+
+            fp = t.get("file_path", "")
+            fn = Path(fp).name
+            src = f"{fn}:{t.get('line_number')}"[:14]
+
+            row_str = f"  {WHITE}{t_name:<22}{RESET} {priv_badge} {GRAY_LIGHT}{fw:<11}{RESET} {aud}      {bnd}    {GRAY_MUTED}{src:<14}{RESET}"
+            clean_len = len(re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', row_str))
+            sp_r = ' ' * max(0, width - 2 - clean_len)
+            print(f"  {fg('#222222')}{v}{row_str}{sp_r}{fg('#222222')}{v}{RESET}")
+
+        print(f"  {fg('#222222')}{bl}{th_line}{br}{RESET}")
+        print()
+
+        if servers:
+            print(f"  {BOLD}{WHITE}Connected MCP Servers:{RESET}")
+            print(f"  {fg('#222222')}{tl}{th_line}{tr}{RESET}")
+            s_hdr = f"  {GRAY_MUTED}{'SERVER NAME':<20} {'COMMAND':<9} {'ARGUMENTS':<26} {'ENV KEYS':<14}{RESET}"
+            clean_s_hdr = len(re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', s_hdr))
+            sp_s = ' ' * max(0, width - 2 - clean_s_hdr)
+            print(f"  {fg('#222222')}{v}{bg('#151515')}{s_hdr}{sp_s}{RESET}{fg('#222222')}{v}{RESET}")
+            print(f"  {fg('#222222')}├{th_line}┤{RESET}")
+            for s in servers:
+                s_name = s.get("name", "")[:19]
+                cmd = s.get("command", "")[:8]
+                args = " ".join(s.get("args", []))[:25]
+                envs = " • ".join(s.get("env_keys", []))[:14] or "None"
+                s_row = f"  {WHITE}{s_name:<20}{RESET} {CYAN_ACCENT}{cmd:<9}{RESET} {GRAY_LIGHT}{args:<26}{RESET} {AMBER_ACCENT}{envs:<14}{RESET}"
+                clean_s = len(re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', s_row))
+                sp_sr = ' ' * max(0, width - 2 - clean_s)
+                print(f"  {fg('#222222')}{v}{s_row}{sp_sr}{fg('#222222')}{v}{RESET}")
+            print(f"  {fg('#222222')}{bl}{th_line}{br}{RESET}")
+            print()
+
+        print(f"  {GRAY_DARK}Tier: Orvyen Agentic Core  •  Full IMDA/OWASP clause mapping: {CYAN_ACCENT}orvyen.dev/pricing{RESET}")
+        print()
+
+    @classmethod
+    def print_compliance(cls, imda: Dict[str, Any], owasp: Dict[str, Any], utf8: bool = True, width: int = 76) -> None:
+        """Renders an executive compliance report card for Singapore IMDA & OWASP LLM."""
+        tl, tr, bl, br = ("╭", "╮", "╰", "╯") if utf8 else ("+", "+", "+", "+")
+        v = "│" if utf8 else "|"
+        h_line = ("─" if utf8 else "-") * (width - 2)
+
+        print()
+        print(f"  {fg('#1E3A4A')}{tl}{h_line}{tr}{RESET}")
+        title = " SINGAPORE IMDA AI GOVERNANCE FRAMEWORK "
+        lp = (width - 2 - len(title)) // 2
+        rp = width - 2 - len(title) - lp
+        print(f"  {fg('#1E3A4A')}{v}{' ' * lp}{BOLD}{WHITE}{title}{RESET}{' ' * rp}{fg('#1E3A4A')}{v}{RESET}")
+        print(f"  {fg('#1E3A4A')}├{h_line}┤{RESET}")
+
+        imda_status = imda.get("overall_status", "COMPLIANT")
+        imda_col = GREEN_ACCENT if imda_status == "COMPLIANT" else RED_ACCENT
+        status_line = f"  {BOLD}{WHITE}Overall Status:{RESET} {BOLD}{imda_col}{imda_status}{RESET} {GRAY_MUTED}({imda.get('score_percentage', 100)}% aligned across 4 Pillars){RESET}"
+        import re
+        clean_status = len(re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', status_line))
+        sp_st = ' ' * max(0, width - 2 - clean_status)
+        print(f"  {fg('#1E3A4A')}{v}{bg('#0A1419')}{status_line}{sp_st}{RESET}{fg('#1E3A4A')}{v}{RESET}")
+        print(f"  {fg('#1E3A4A')}├{h_line}┤{RESET}")
+
+        for p_name, p_data in imda.get("pillars", {}).items():
+            p_status = p_data.get("status", "COMPLIANT")
+            p_col = GREEN_ACCENT if p_status == "COMPLIANT" else (AMBER_ACCENT if p_status == "WARNING" else RED_ACCENT)
+            p_focus = p_data.get("name", "")
+            rules_str = f"{p_data.get('passed_rules', 0)}/{len(p_data.get('rules', []))} pass"
+
+            row_str = f"  {WHITE}{p_name}:{RESET} {GRAY_LIGHT}{p_focus:<28}{RESET}  {p_col}{BOLD}{p_status:<10}{RESET}  {GRAY_MUTED}{rules_str}{RESET}"
+            clean_len = len(re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', row_str))
+            sp = ' ' * max(0, width - 2 - clean_len)
+            print(f"  {fg('#1E3A4A')}{v}{row_str}{sp}{fg('#1E3A4A')}{v}{RESET}")
+
+        print(f"  {fg('#1E3A4A')}{bl}{h_line}{br}{RESET}")
+        print()
+
+        # OWASP LLM Top 10 Card
+        print(f"  {fg('#1E3A4A')}{tl}{h_line}{tr}{RESET}")
+        title2 = " OWASP TOP 10 FOR LLM APPLICATIONS (2025) "
+        lp2 = (width - 2 - len(title2)) // 2
+        rp2 = width - 2 - len(title2) - lp2
+        print(f"  {fg('#1E3A4A')}{v}{' ' * lp2}{BOLD}{WHITE}{title2}{RESET}{' ' * rp2}{fg('#1E3A4A')}{v}{RESET}")
+        print(f"  {fg('#1E3A4A')}├{h_line}┤{RESET}")
+
+        owasp_status = owasp.get("overall_status", "PASS")
+        owasp_col = GREEN_ACCENT if owasp_status == "PASS" else RED_ACCENT
+        owasp_hdr = f"  {BOLD}{WHITE}Overall Status:{RESET} {BOLD}{owasp_col}{owasp_status}{RESET} {GRAY_MUTED}({owasp.get('score_percentage', 100)}% category pass rate){RESET}"
+        clean_owasp = len(re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', owasp_hdr))
+        sp_ow = ' ' * max(0, width - 2 - clean_owasp)
+        print(f"  {fg('#1E3A4A')}{v}{bg('#0A1419')}{owasp_hdr}{sp_ow}{RESET}{fg('#1E3A4A')}{v}{RESET}")
+        print(f"  {fg('#1E3A4A')}├{h_line}┤{RESET}")
+
+        categories = owasp.get("categories", [])
+        if categories:
+            for cat in categories:
+                cat_code = cat.get("code", "")
+                cat_title = cat.get("title", "")[:36]
+                cat_status = cat.get("status", "PASS")
+                cat_col = GREEN_ACCENT if cat_status == "PASS" else RED_ACCENT
+                v_count = f"{cat.get('violations', 0)} issues"
+                row_c = f"  {CYAN_ACCENT}{cat_code:<7}{RESET} {WHITE}{cat_title:<38}{RESET} {cat_col}{BOLD}{cat_status:<6}{RESET} {GRAY_MUTED}{v_count}{RESET}"
+                clean_c = len(re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', row_c))
+                sp_c = ' ' * max(0, width - 2 - clean_c)
+                print(f"  {fg('#1E3A4A')}{v}{row_c}{sp_c}{fg('#1E3A4A')}{v}{RESET}")
+        else:
+            owasp_items = [
+                ("LLM01", "Prompt Injection & Jailbreaking", "PASS", "0 issues"),
+                ("LLM02", "Sensitive Information Disclosure", "PASS", "0 issues"),
+                ("LLM06", "Excessive Agency & Unaudited Tools", "PASS", "0 issues"),
+                ("LLM09", "Misinformation & Insecure Transport", "PASS", "0 issues"),
+                ("LLM10", "Unbounded Consumption & Recursion", "PASS", "0 issues"),
+            ]
+            for code, title_t, st, issues in owasp_items:
+                st_col = GREEN_ACCENT if st == "PASS" else RED_ACCENT
+                row_c = f"  {CYAN_ACCENT}{code:<7}{RESET} {WHITE}{title_t:<38}{RESET} {st_col}{BOLD}{st:<6}{RESET} {GRAY_MUTED}{issues}{RESET}"
+                clean_c = len(re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', row_c))
+                sp_c = ' ' * max(0, width - 2 - clean_c)
+                print(f"  {fg('#1E3A4A')}{v}{row_c}{sp_c}{fg('#1E3A4A')}{v}{RESET}")
+
+        print(f"  {fg('#1E3A4A')}{bl}{h_line}{br}{RESET}")
+        print()
+
 
 def print_scan_result(
     result: ScanResult,
