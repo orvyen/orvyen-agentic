@@ -137,14 +137,14 @@ def interactive_loop(
 
     while True:
         try:
-            raw = input(f"{CYAN}>{RESET} ").strip()
+            raw = input(f"  {GRAY_MUTED}>{RESET} ").strip()
         except (KeyboardInterrupt, EOFError):
-            print(f"\n{GRAY}Exiting Orvyen Agentic. Goodbye!{RESET}\n")
+            print(f"\n{GRAY_MUTED}Exiting Orvyen Agentic. Goodbye!{RESET}\n")
             return 0
 
         cmd = raw.lower()
         if cmd in ("exit", "quit", "q", "/exit", ":q"):
-            print(f"{GRAY}Exiting Orvyen Agentic. Goodbye!{RESET}\n")
+            print(f"\n{GRAY_MUTED}Exiting Orvyen Agentic. Goodbye!{RESET}\n")
             return 0
 
         elif cmd in ("", "/scan", "scan") or cmd.startswith(("/scan ", "scan ")):
@@ -154,8 +154,11 @@ def interactive_loop(
                 if new_target.exists():
                     curr_target = new_target
                 else:
-                    print(f"{RED}Error: Path '{parts[1].strip()}' does not exist.{RESET}")
+                    print(f"  {RED_ACCENT}Error: Path '{parts[1].strip()}' does not exist.{RESET}")
                     continue
+
+            if is_fancy:
+                os.system("cls" if os.name == "nt" else "clear")
 
             engine = ScanEngine(curr_target)
             res = engine.run()
@@ -167,6 +170,8 @@ def interactive_loop(
             )
 
         elif cmd in ("/secure", "secure"):
+            if is_fancy:
+                os.system("cls" if os.name == "nt" else "clear")
             curr_target = Path("tests/fixtures/secure_agent")
             if not curr_target.exists():
                 curr_target = Path(__file__).parent.parent / "tests" / "fixtures" / "secure_agent"
@@ -180,6 +185,8 @@ def interactive_loop(
             )
 
         elif cmd in ("/vulnerable", "vulnerable"):
+            if is_fancy:
+                os.system("cls" if os.name == "nt" else "clear")
             curr_target = Path("tests/fixtures/vulnerable_agent")
             if not curr_target.exists():
                 curr_target = Path(__file__).parent.parent / "tests" / "fixtures" / "vulnerable_agent"
@@ -330,6 +337,8 @@ def main(argv: list[str] | None = None) -> int:
     # Format handling
     if args.format in ("terminal", "all"):
         if not args.quiet:
+            if is_fancy and is_interactive:
+                os.system("cls" if os.name == "nt" else "clear")
             ConsoleReporter.print_result(
                 result,
                 min_severity=min_sev,

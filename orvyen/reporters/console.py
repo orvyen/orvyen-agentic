@@ -1,8 +1,8 @@
 """
 High-performance, tier-1 developer CLI console reporter for Orvyen Agentic.
-Engineered to the visual standards of tools like Claude Code, Ruff, Cargo, and Snyk.
-Features a dynamic 16x16 ANSI block art logo, Claude Code-style header,
-and interactive command autocomplete dropdown.
+Engineered to modern developer tooling standards (JetBrains Mono, Vercel/Linear dark tokens).
+Features a real chevron ANSI block matrix from Orvyen_1.png, floating cards,
+status pills, and precision compliance summary matrices.
 """
 
 from __future__ import annotations
@@ -25,7 +25,30 @@ if hasattr(sys.stdout, "reconfigure"):
     except Exception:
         pass
 
-# Terminal styling primitives
+
+def fg(hex_code: str) -> str:
+    """Returns ANSI 24-bit TrueColor foreground escape sequence."""
+    hex_code = hex_code.lstrip("#")
+    if len(hex_code) == 3:
+        hex_code = "".join(c * 2 for c in hex_code)
+    r = int(hex_code[0:2], 16)
+    g = int(hex_code[2:4], 16)
+    b = int(hex_code[4:6], 16)
+    return f"\033[38;2;{r};{g};{b}m"
+
+
+def bg(hex_code: str) -> str:
+    """Returns ANSI 24-bit TrueColor background escape sequence."""
+    hex_code = hex_code.lstrip("#")
+    if len(hex_code) == 3:
+        hex_code = "".join(c * 2 for c in hex_code)
+    r = int(hex_code[0:2], 16)
+    g = int(hex_code[2:4], 16)
+    b = int(hex_code[4:6], 16)
+    return f"\033[48;2;{r};{g};{b}m"
+
+
+# Text styling primitives
 RESET = "\033[0m"
 BOLD = "\033[1m"
 DIM = "\033[2m"
@@ -33,44 +56,35 @@ ITALIC = "\033[3m"
 UNDERLINE = "\033[4m"
 BLINK = "\033[5m"
 
-# Text Colors
-RED = "\033[38;5;196m" if os.environ.get("COLORTERM") else "\033[31m"
-LIGHT_RED = "\033[38;5;203m" if os.environ.get("COLORTERM") else "\033[91m"
-GREEN = "\033[38;5;40m" if os.environ.get("COLORTERM") else "\033[32m"
-YELLOW = "\033[38;5;214m" if os.environ.get("COLORTERM") else "\033[33m"
-BLUE = "\033[38;5;75m" if os.environ.get("COLORTERM") else "\033[34m"
-CYAN = "\033[38;5;44m" if os.environ.get("COLORTERM") else "\033[36m"
-PURPLE = "\033[38;5;141m" if os.environ.get("COLORTERM") else "\033[35m"
-WHITE = "\033[38;5;255m" if os.environ.get("COLORTERM") else "\033[97m"
-GRAY = "\033[38;5;244m" if os.environ.get("COLORTERM") else "\033[90m"
+# Standard Palette
+WHITE = fg("#FFFFFF")
+GRAY_MUTED = fg("#6B7280")
+GRAY_DARK = fg("#4B5563")
+GRAY_LIGHT = fg("#9CA3AF")
+GREEN_ACCENT = fg("#10B981")
+CYAN_ACCENT = fg("#06B6D4")
+RED_ACCENT = fg("#EF4444")
+AMBER_ACCENT = fg("#F59E0B")
 
-# Background badges
-BG_RED = "\033[48;5;196m\033[38;5;255m" if os.environ.get("COLORTERM") else "\033[41m\033[37m"
-BG_ORANGE = "\033[48;5;202m\033[38;5;255m" if os.environ.get("COLORTERM") else "\033[43m\033[30m"
-BG_YELLOW = "\033[48;5;220m\033[38;5;232m" if os.environ.get("COLORTERM") else "\033[43m\033[30m"
-BG_BLUE = "\033[48;5;33m\033[38;5;255m" if os.environ.get("COLORTERM") else "\033[44m\033[37m"
-BG_GREEN = "\033[48;5;34m\033[38;5;255m" if os.environ.get("COLORTERM") else "\033[42m\033[37m"
-BG_CYAN = "\033[48;5;31m\033[38;5;255m" if os.environ.get("COLORTERM") else "\033[46m\033[30m"
-
-# Precomputed 16x16 pixel matrix extracted from Orvyen_1.png
-# (1 = red, 0 = space / transparent background)
+# Precomputed 16x16 pixel matrix extracted directly from Orvyen_1.png
+# Real right-facing chevron geometry with offset red block on the left and white square cutout.
 PRECOMPUTED_16X16 = [
-    [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
-    [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
-    [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
-    [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-    [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
-    [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-    [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
-    [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
-    [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+    [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+    [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+    [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+    [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+    [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+    [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
 ]
 
 
@@ -82,14 +96,13 @@ def _can_utf8() -> bool:
 
 def load_logo_matrix() -> List[List[int]]:
     """
-    Attempts to convert Orvyen_1.png to a 16x16 pixel matrix at runtime using PIL.
-    Falls back gracefully to the precomputed matrix if PIL is absent or the image is missing,
-    ensuring a zero-dependency core.
+    Attempts to load Orvyen_1.png at runtime using PIL and downsample to 16x16.
+    Falls back gracefully to PRECOMPUTED_16X16, maintaining zero mandatory dependencies.
     """
     candidates = [
         Path.cwd() / "Orvyen_1.png",
-        Path(__file__).parent.parent / "assets" / "Orvyen_1.png",
         Path("/mnt/data/Orvyen_1.png"),
+        Path(__file__).parent.parent / "assets" / "Orvyen_1.png",
         Path("C:/mnt/data/Orvyen_1.png"),
     ]
     for candidate in candidates:
@@ -115,10 +128,10 @@ def load_logo_matrix() -> List[List[int]]:
 def render_logo_lines(matrix: List[List[int]], utf8: bool = True) -> List[str]:
     """
     Renders the 16x16 matrix into 8 terminal lines using half-block characters
-    (▀ upper half, ▄ lower half, █ full block).
+    (▀ upper half, ▄ lower half, █ full block) with #EF4444 true red.
     """
     lines: List[str] = []
-    red_color = RED
+    red_color = RED_ACCENT
     for r in range(8):
         top_row = matrix[r * 2]
         bot_row = matrix[r * 2 + 1]
@@ -172,7 +185,7 @@ class ConsoleReporter:
             else:
                 cls._print_detailed_findings(filtered, utf8)
 
-        # 3. Footer Metric Line (if fancy) & Executive Compliance Summary Card
+        # 3. Footer Metric Line & Executive Compliance Summary Card
         if fancy:
             cls._print_footer(result, utf8)
 
@@ -191,17 +204,14 @@ class ConsoleReporter:
     def _print_fancy_header(cls, result: Optional[ScanResult], utf8: bool) -> None:
         matrix = load_logo_matrix()
         logo_lines = render_logo_lines(matrix, utf8=utf8)
-        bullet = "•" if utf8 else "-"
-        arrow = "↑" if utf8 else "^"
-
-        term_width = min(max(shutil.get_terminal_size((80, 24)).columns, 40), 96)
-        timing_str = f"{result.duration_ms:.1f}ms" if result else "7.1ms"
+        term_width = min(max(shutil.get_terminal_size((80, 24)).columns, 40), 72)
+        timing_str = f"{result.duration_ms:.1f}ms" if result else "7.3ms"
 
         header_texts = [
             "",
             f"{BOLD}{WHITE}Orvyen Agentic v{__version__}{RESET}",
-            f"{DIM}Opus Engine {bullet} Sub-100ms {bullet} 12 Rules {bullet} 22 tests{RESET}",
-            f"{DIM}~/orvyen-agentic {bullet} Singapore {bullet} IMDA v1.5 Compliant{RESET}",
+            f"{GRAY_MUTED}Opus Engine • Sub-100ms • 12 Rules • 22 tests{RESET}",
+            f"{GRAY_DARK}~/orvyen-agentic • Singapore • IMDA v1.5 Compliant{RESET}",
             "",
             "",
             "",
@@ -210,63 +220,79 @@ class ConsoleReporter:
 
         print()
         for i in range(8):
-            txt = header_texts[i] if i < len(header_texts) else ""
-            print(f"{logo_lines[i]}   {txt}")
+            txt = header_texts[i]
+            print(f"  {logo_lines[i]}    {txt}")
 
         print()
-        print(f" {GREEN}{arrow}{RESET} 12 checks {bullet} AIBOM + OWASP + IMDA {bullet} {timing_str} scan — now defaults to pre-deploy gate")
+        # Status pill: bg #111 border #222, green arrow #10B981, text #9CA3AF
+        pill_str = f"  {bg('#111111')}{fg('#222222')}│{GREEN_ACCENT} ↑ {GRAY_LIGHT}12 checks • AIBOM + OWASP + IMDA • {timing_str} {fg('#222222')}│{RESET}"
+        print(pill_str)
+
+        # Separator: 1px #1F1F1F
         sep_char = "─" if utf8 else "-"
-        print(f"{GRAY}{sep_char * term_width}{RESET}")
+        print(f"  {fg('#1F1F1F')}{sep_char * term_width}{RESET}")
 
     @classmethod
     def _print_fancy_dropdown(cls, utf8: bool) -> None:
-        term_width = min(max(shutil.get_terminal_size((80, 24)).columns, 40), 96)
-        box_width = min(term_width, 76)
-        arrow_char = "→" if utf8 else "->"
+        term_width = min(max(shutil.get_terminal_size((80, 24)).columns, 40), 72)
+        width = term_width
+        h_line = ("─" if utf8 else "-") * (width - 2)
+        tl, tr, bl, br = ("╭", "╮", "╰", "╯") if utf8 else ("+", "+", "+", "+")
+        v = "│" if utf8 else "|"
 
         print()
-        print(f"> {WHITE}/scan{RESET}{BLINK}█{RESET}")
+        # Input: "> " #6B7280 + "/scan" #FFF, input box bg #111 border #222 rounded
+        inner_sp = " " * max(1, width - 2 - 9)
+        print(f"  {fg('#222222')}{tl}{h_line}{tr}{RESET}")
+        print(f"  {fg('#222222')}{v}{bg('#111111')}  {GRAY_MUTED}> {BOLD}{WHITE}/scan{RESET}{bg('#111111')}{WHITE}█{inner_sp}{fg('#222222')}{v}{RESET}")
+        print(f"  {fg('#222222')}{bl}{h_line}{br}{RESET}")
+        print()
 
-        items = [
+        # Dropdown: floating card bg #151515 border #222 rounded 8px shadow, 5 rows
+        # Selected row = bg #0F1F25 + left border 2px solid #06B6D4, NOT full blue background
+        dropdown_items = [
             ("/scan", "Scan agent codebase pre-deploy [OAG-001..OAG-012]"),
             ("/aibom", "Generate Agent Bill of Materials"),
             ("/compliance", "IMDA v1.5 + MAS FEAT matrix"),
-            ("/secure", f"Run against secure_agent fixture {arrow_char} 100/100 HEALTHY"),
-            ("/vulnerable", f"Run against vulnerable_agent {arrow_char} 8 Critical, 15 High"),
-            ("/help", "Show all commands"),
+            ("/secure", "Run against secure_agent fixture → 100/100 HEALTHY"),
+            ("/vulnerable", "Run against vulnerable_agent → 8 Critical, 15 High"),
         ]
 
-        for idx, (cmd, desc) in enumerate(items):
-            cmd_str = f"  {cmd}"
-            desc_str = f"{desc}  "
-            spacing = " " * max(1, box_width - len(cmd_str) - len(desc_str))
+        print(f"  {fg('#222222')}{tl}{h_line}{tr}{RESET}")
+        for idx, (cmd, desc) in enumerate(dropdown_items):
+            content_w = width - 4
+            spacing = " " * max(1, content_w - len(cmd) - len(desc) - 2)
             if idx == 0:
-                row_content = f"{cmd_str}{spacing}{desc_str}"
-                print(f"{BG_CYAN}{BOLD}{row_content}{RESET}")
+                # selected row: bg #0F1F25 + left border 2px solid #06B6D4
+                left_border = f"{CYAN_ACCENT}▌{RESET}"
+                row_content = f"{bg('#0F1F25')} {BOLD}{WHITE}{cmd}{RESET}{bg('#0F1F25')}{spacing}{GRAY_MUTED}{desc} {RESET}"
+                print(f"  {fg('#222222')}{v}{RESET}{left_border}{row_content}{fg('#222222')}{v}{RESET}")
             else:
-                print(f"{WHITE}{cmd_str}{RESET}{spacing}{DIM}{desc_str}{RESET}")
+                left_border = f"{bg('#151515')} {RESET}"
+                row_content = f"{bg('#151515')} {WHITE}{cmd}{spacing}{GRAY_MUTED}{desc} {RESET}"
+                print(f"  {fg('#222222')}{v}{RESET}{left_border}{row_content}{fg('#222222')}{v}{RESET}")
+
+        print(f"  {fg('#222222')}{bl}{h_line}{br}{RESET}")
+        print()
+
+    @classmethod
+    def _print_clean_banner(cls, utf8: bool) -> None:
+        check = "✓" if utf8 else "[PASS]"
+        print(f"  {BOLD}{GREEN_ACCENT}{check} All clear!{RESET} {GRAY_MUTED}No security vulnerabilities or policy violations detected.{RESET}")
+        print(f"  {GRAY_DARK}All agent graphs, tools, prompts, and MCP gateways adhere to baseline policies.{RESET}")
         print()
 
     @classmethod
     def _print_footer(cls, result: ScanResult, utf8: bool) -> None:
         score = result.security_score
-        bullet = "•" if utf8 else "-"
-
-        if score >= 85:
-            score_color = GREEN
-            score_grade = "HEALTHY"
-        elif score >= 60:
-            score_color = YELLOW
-            score_grade = "RISK DETECTED"
-        else:
-            score_color = RED
-            score_grade = "HIGH VULNERABILITY"
-
+        score_color = GREEN_ACCENT if score >= 85 else (AMBER_ACCENT if score >= 60 else RED_ACCENT)
+        score_grade = "HEALTHY" if score >= 85 else ("RISK DETECTED" if score >= 60 else "HIGH VULNERABILITY")
         timing_str = f"{result.duration_ms:.1f}ms" if result.duration_ms < 1000 else f"{result.duration_ms / 1000:.2f}s"
+
         print(
-            f"Security Score: {score_color}{BOLD}{score}/100 [{score_grade}]{RESET} "
-            f"{GRAY}{bullet}{RESET} Files: {WHITE}{result.files_scanned}{RESET} "
-            f"{GRAY}{bullet}{RESET} Time: {GREEN}{timing_str}{RESET}"
+            f"  {GRAY_LIGHT}Security Score: {BOLD}{score_color}{score}/100 [{score_grade}]{RESET} "
+            f"{GRAY_MUTED}•{RESET} {GRAY_LIGHT}Files: {WHITE}{result.files_scanned}{RESET} "
+            f"{GRAY_MUTED}•{RESET} {GRAY_LIGHT}Time: {score_color}{timing_str}{RESET}"
         )
         print()
 
@@ -276,7 +302,7 @@ class ConsoleReporter:
         bullet = "•" if utf8 else "-"
         print()
         print(
-            f"{CYAN}{BOLD}{bolt} orvyen-agentic{RESET} {GRAY}v{__version__}{RESET} "
+            f"{CYAN_ACCENT}{BOLD}{bolt} orvyen-agentic{RESET} {GRAY_MUTED}v{__version__}{RESET} "
             f"{DIM}{bullet}{RESET} {WHITE}AI Agent Static Security & Compliance Scanner{RESET}"
         )
         if result:
@@ -290,17 +316,10 @@ class ConsoleReporter:
             timing_str = f"{result.duration_ms:.1f}ms" if result.duration_ms < 1000 else f"{duration_sec:.2f}s"
 
             print(
-                f"{GRAY}Target:{RESET} {WHITE}{rel_target}{RESET}  "
-                f"{GRAY}|  Files scanned:{RESET} {WHITE}{result.files_scanned}{RESET}  "
-                f"{GRAY}|  Time:{RESET} {GREEN}{timing_str}{RESET}"
+                f"{GRAY_MUTED}Target:{RESET} {WHITE}{rel_target}{RESET}  "
+                f"{GRAY_MUTED}|  Files scanned:{RESET} {WHITE}{result.files_scanned}{RESET}  "
+                f"{GRAY_MUTED}|  Time:{RESET} {GREEN_ACCENT}{timing_str}{RESET}"
             )
-        print()
-
-    @classmethod
-    def _print_clean_banner(cls, utf8: bool) -> None:
-        check = "✔" if utf8 else "[PASS]"
-        print(f"  {GREEN}{BOLD}{check} All clear!{RESET} {WHITE}No security vulnerabilities or policy violations detected.{RESET}")
-        print(f"  {GRAY}All agent graphs, tools, prompts, and MCP gateways adhere to baseline policies.{RESET}")
         print()
 
     @classmethod
@@ -327,24 +346,24 @@ class ConsoleReporter:
 
         sev = f.severity
         if sev == Severity.CRITICAL:
-            sev_badge = f"{BG_RED}{BOLD} CRITICAL {RESET}"
-            icon_color = RED
+            sev_badge = f"{bg('#EF4444')}{BOLD}{WHITE} CRITICAL {RESET}"
+            icon_color = RED_ACCENT
         elif sev == Severity.HIGH:
-            sev_badge = f"{BG_ORANGE}{BOLD} HIGH {RESET}"
-            icon_color = LIGHT_RED
+            sev_badge = f"{bg('#F59E0B')}{BOLD}{WHITE} HIGH {RESET}"
+            icon_color = AMBER_ACCENT
         elif sev == Severity.MEDIUM:
-            sev_badge = f"{BG_YELLOW}{BOLD} MEDIUM {RESET}"
-            icon_color = YELLOW
+            sev_badge = f"{bg('#D97706')}{BOLD}{WHITE} MEDIUM {RESET}"
+            icon_color = AMBER_ACCENT
         elif sev == Severity.LOW:
-            sev_badge = f"{CYAN}{BOLD} LOW {RESET}"
-            icon_color = CYAN
+            sev_badge = f"{CYAN_ACCENT}{BOLD} LOW {RESET}"
+            icon_color = CYAN_ACCENT
         else:
-            sev_badge = f"{GRAY} INFO {RESET}"
-            icon_color = GRAY
+            sev_badge = f"{GRAY_MUTED} INFO {RESET}"
+            icon_color = GRAY_MUTED
 
-        print(f"{icon_color}{BOLD}{cross}{RESET} {sev_badge} {BOLD}{WHITE}{f.rule_id}{RESET} {GRAY}{bullet}{RESET} {BOLD}{f.rule_title}{RESET}")
-        print(f"  {GRAY}{arrow}{RESET} {UNDERLINE}{WHITE}{rel_path}:{f.line_number}:{f.column}{RESET}")
-        print(f"  {GRAY}{pipe}{RESET}")
+        print(f"  {icon_color}{BOLD}{cross}{RESET} {sev_badge} {BOLD}{WHITE}{f.rule_id}{RESET} {GRAY_MUTED}{bullet}{RESET} {BOLD}{f.rule_title}{RESET}")
+        print(f"    {GRAY_MUTED}{arrow}{RESET} {UNDERLINE}{WHITE}{rel_path}:{f.line_number}:{f.column}{RESET}")
+        print(f"    {GRAY_MUTED}{pipe}{RESET}")
 
         if f.code_snippet:
             lines = f.code_snippet.strip().splitlines()
@@ -352,18 +371,18 @@ class ConsoleReporter:
             for offset, line_text in enumerate(lines[:5]):
                 curr_no = start_lineno + offset
                 is_target_line = (curr_no == f.line_number) or (offset == 0 and len(lines) == 1)
-                gutter_color = RED if is_target_line else GRAY
-                line_color = WHITE if is_target_line else GRAY
+                gutter_color = RED_ACCENT if is_target_line else GRAY_MUTED
+                line_color = WHITE if is_target_line else GRAY_MUTED
                 mark = f"{icon_color}>{RESET}" if is_target_line else " "
-                print(f"{mark} {gutter_color}{curr_no:>4} {pipe}{RESET} {line_color}{line_text}{RESET}")
+                print(f"  {mark} {gutter_color}{curr_no:>4} {pipe}{RESET} {line_color}{line_text}{RESET}")
 
-            print(f"    {GRAY}     {pipe}{RESET} {icon_color}{BOLD}{' ' * max(0, f.column - 1)}^^^^^^^^ {f.message}{RESET}")
+            print(f"      {GRAY_MUTED}     {pipe}{RESET} {icon_color}{BOLD}{' ' * max(0, f.column - 1)}^^^^^^^^ {f.message}{RESET}")
         else:
-            print(f"    {GRAY}     {pipe}{RESET} {WHITE}{f.message}{RESET}")
+            print(f"      {GRAY_MUTED}     {pipe}{RESET} {WHITE}{f.message}{RESET}")
 
-        print(f"  {GRAY}{pipe}{RESET}")
-        print(f"  {GRAY}= Standards:{RESET}  {PURPLE}{BOLD}{f.owasp_id}{RESET} {GRAY}{bullet}{RESET} {BLUE}{f.imda_pillar}{RESET}")
-        print(f"  {GRAY}= Fix:{RESET}        {GREEN}{f.remediation}{RESET}")
+        print(f"    {GRAY_MUTED}{pipe}{RESET}")
+        print(f"    {GRAY_MUTED}= Standards:{RESET}  {fg('#A855F7')}{BOLD}{f.owasp_id}{RESET} {GRAY_MUTED}{bullet}{RESET} {CYAN_ACCENT}{f.imda_pillar}{RESET}")
+        print(f"    {GRAY_MUTED}= Fix:{RESET}        {GREEN_ACCENT}{f.remediation}{RESET}")
         print()
 
     @classmethod
@@ -376,12 +395,12 @@ class ConsoleReporter:
                 rel_path = f.file_path
 
             sev = f.severity
-            sev_color = RED if sev in (Severity.CRITICAL, Severity.HIGH) else (YELLOW if sev == Severity.MEDIUM else CYAN)
+            sev_color = RED_ACCENT if sev in (Severity.CRITICAL, Severity.HIGH) else (AMBER_ACCENT if sev == Severity.MEDIUM else CYAN_ACCENT)
             print(
-                f"{GRAY}{rel_path}:{f.line_number}:{f.column}{RESET} "
+                f"  {GRAY_MUTED}{rel_path}:{f.line_number}:{f.column}{RESET} "
                 f"{sev_color}{BOLD}{sev.value:<8}{RESET} "
                 f"{WHITE}{BOLD}{f.rule_id}{RESET} "
-                f"{GRAY}{bullet}{RESET} {f.message}"
+                f"{GRAY_MUTED}{bullet}{RESET} {f.message}"
             )
         print()
 
@@ -390,72 +409,50 @@ class ConsoleReporter:
         imda = IMDAComplianceEvaluator.evaluate(result.findings)
         owasp = OWASPComplianceEvaluator.evaluate(result.findings)
 
-        score = result.security_score
-        if score >= 85:
-            score_color = GREEN
-            score_grade = "HEALTHY"
-        elif score >= 60:
-            score_color = YELLOW
-            score_grade = "RISK DETECTED"
-        else:
-            score_color = RED
-            score_grade = "HIGH VULNERABILITY"
-
-        tl = "╭" if utf8 else "+"
-        tr = "╮" if utf8 else "+"
-        bl = "╰" if utf8 else "+"
-        br = "╯" if utf8 else "+"
-        h = "─" if utf8 else "-"
+        box_w = 72
+        h_box = ("─" if utf8 else "-") * (box_w - 2)
+        tl, tr, bl, br = ("╭", "╮", "╰", "╯") if utf8 else ("+", "+", "+", "+")
         v = "│" if utf8 else "|"
-        bullet = "•" if utf8 else "-"
 
-        width = 68
-        title = " EXECUTIVE COMPLIANCE & RISK SUMMARY "
-        left_pad = (width - len(title)) // 2
-        right_pad = width - len(title) - left_pad
+        card_title = " EXECUTIVE COMPLIANCE & RISK SUMMARY "
+        left_p = (box_w - 2 - len(card_title)) // 2
+        right_p = box_w - 2 - len(card_title) - left_p
 
-        print(f"{CYAN}{tl}{h * left_pad}{BOLD}{WHITE}{title}{RESET}{CYAN}{h * right_pad}{tr}{RESET}")
-        
-        # Row 1: Security Score Gauge
-        score_line = f"  Security Score:       {score_color}{BOLD}{score:>3}/100{RESET}  {score_color}[{score_grade}]{RESET}"
-        cls._print_card_row(score_line, width, v, utf8)
+        print(f"  {fg('#1E3A4A')}{tl}{h_box}{tr}{RESET}")
+        print(f"  {fg('#1E3A4A')}{v}{' ' * left_p}{BOLD}{WHITE}{card_title}{RESET}{' ' * right_p}{fg('#1E3A4A')}{v}{RESET}")
 
-        # Row 2: Findings Count breakdown
-        crit = f"{RED}{BOLD}{result.critical_count} Critical{RESET}"
-        high = f"{LIGHT_RED}{BOLD}{result.high_count} High{RESET}"
-        med = f"{YELLOW}{result.medium_count} Med{RESET}"
-        low = f"{CYAN}{result.low_count} Low{RESET}"
-        findings_line = f"  Violations Found:     {crit} {GRAY}{bullet}{RESET} {high} {GRAY}{bullet}{RESET} {med} {GRAY}{bullet}{RESET} {low}"
-        cls._print_card_row(findings_line, width, v, utf8)
+        def print_comp_row(label: str, val_str: str) -> None:
+            import re
+            ansi_clean = re.sub(r"\x1B\[[0-?]*[ -/]*[@-~]", "", val_str)
+            sp = " " * max(1, box_w - 2 - len(label) - len(ansi_clean) - 4)
+            print(f"  {fg('#1E3A4A')}{v}{bg('#0A1419')}  {GRAY_MUTED}{label}:{RESET}{bg('#0A1419')}{sp}{val_str}  {RESET}{fg('#1E3A4A')}{v}{RESET}")
 
-        # Row 3: Inventory summary
+        score = result.security_score
+        score_color = GREEN_ACCENT if score >= 85 else (AMBER_ACCENT if score >= 60 else RED_ACCENT)
+        score_grade = "HEALTHY" if score >= 85 else ("RISK DETECTED" if score >= 60 else "HIGH VULNERABILITY")
+        print_comp_row("Security Score", f"{BOLD}{score_color}{score:>3}/100  [{score_grade}]{RESET}")
+
+        # Severity colors ONLY when > 0
+        crit_str = f"{BOLD}{RED_ACCENT}{result.critical_count} Critical{RESET}" if result.critical_count > 0 else f"{GRAY_MUTED}0 Critical{RESET}"
+        high_str = f"{BOLD}{AMBER_ACCENT}{result.high_count} High{RESET}" if result.high_count > 0 else f"{GRAY_MUTED}0 High{RESET}"
+        med_str = f"{AMBER_ACCENT}{result.medium_count} Med{RESET}" if result.medium_count > 0 else f"{GRAY_MUTED}0 Med{RESET}"
+        low_str = f"{CYAN_ACCENT}{result.low_count} Low{RESET}" if result.low_count > 0 else f"{GRAY_MUTED}0 Low{RESET}"
+        print_comp_row("Violations Found", f"{crit_str} {GRAY_MUTED}•{RESET} {high_str} {GRAY_MUTED}•{RESET} {med_str} {GRAY_MUTED}•{RESET} {low_str}")
+
         exec_count = sum(1 for t in result.tools if t.privilege.value in ("EXECUTE", "ADMIN"))
-        inventory_line = f"  Asset Inventory:      {WHITE}{len(result.tools)} Tools{RESET} ({RED}{exec_count} High-Privilege{RESET}) {GRAY}{bullet}{RESET} {WHITE}{len(result.mcp_servers)} MCP Gateways{RESET}"
-        cls._print_card_row(inventory_line, width, v, utf8)
+        exec_str = f"{RED_ACCENT}{exec_count} High-Privilege{RESET}" if exec_count > 0 else f"{GRAY_MUTED}0 High-Privilege{RESET}"
+        print_comp_row("Asset Inventory", f"{WHITE}{len(result.tools)} Tools{RESET} ({exec_str}) {GRAY_MUTED}•{RESET} {WHITE}{len(result.mcp_servers)} MCP Gateways{RESET}")
 
-        # Row 4: Singapore IMDA Status
         imda_status = imda.get("overall_status")
-        imda_color = GREEN if imda_status == "COMPLIANT" else RED
-        imda_line = f"  Singapore IMDA:       {imda_color}{BOLD}{imda_status:<14}{RESET} ({imda.get('score_percentage')}% aligned to 4 Pillars)"
-        cls._print_card_row(imda_line, width, v, utf8)
+        imda_color = GREEN_ACCENT if imda_status == "COMPLIANT" else RED_ACCENT
+        print_comp_row("Singapore IMDA", f"{BOLD}{imda_color}{imda_status:<10}{RESET} ({GRAY_MUTED}{imda.get('score_percentage')}% aligned to 4 Pillars{RESET})")
 
-        # Row 5: OWASP LLM Status
         owasp_status = owasp.get("overall_status")
-        owasp_color = GREEN if owasp_status == "PASS" else RED
-        owasp_line = f"  OWASP LLM Top 10:     {owasp_color}{BOLD}{owasp_status:<14}{RESET} ({owasp.get('score_percentage')}% category pass rate)"
-        cls._print_card_row(owasp_line, width, v, utf8)
+        owasp_color = GREEN_ACCENT if owasp_status == "PASS" else RED_ACCENT
+        print_comp_row("OWASP LLM Top 10", f"{BOLD}{owasp_color}{owasp_status:<10}{RESET} ({GRAY_MUTED}{owasp.get('score_percentage')}% category pass rate{RESET})")
 
-        print(f"{CYAN}{bl}{h * width}{br}{RESET}")
+        print(f"  {fg('#1E3A4A')}{bl}{h_box}{br}{RESET}")
         print()
-
-    @classmethod
-    def _print_card_row(cls, content_with_ansi: str, width: int, v: str, utf8: bool) -> None:
-        """Strip ANSI escapes to calculate visual character length and pad to exact width."""
-        import re
-        ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
-        plain_len = len(ansi_escape.sub("", content_with_ansi))
-        pad = max(0, width - plain_len)
-        print(f"{CYAN}{v}{RESET}{content_with_ansi}{' ' * pad}{CYAN}{v}{RESET}")
 
 
 def print_scan_result(
