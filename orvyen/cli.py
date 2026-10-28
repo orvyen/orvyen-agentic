@@ -16,7 +16,7 @@ from orvyen.compliance.aibom import AIBOMCompiler
 from orvyen.compliance.license_gate import is_valid_license
 from orvyen.compliance.imda_matrix import IMDAComplianceEvaluator
 from orvyen.compliance.owasp_matrix import OWASPComplianceEvaluator
-from orvyen.reporters.console import ConsoleReporter
+from orvyen.reporters.console import ConsoleReporter, InteractivePrompt
 from orvyen.reporters.json_reporter import JSONReporter
 from orvyen.reporters.html_reporter import HTMLReporter
 from orvyen.reporters.pdf_reporter import PDFReporter
@@ -128,18 +128,15 @@ def interactive_loop(
     is_fancy: bool,
     license_key: str | None = None,
 ) -> int:
-    """Keeps the user in the interactive terminal session with keyboard shortcuts and commands."""
-    bullet = "•"
+    """Keeps the user in the interactive terminal session with live in-box prompt and dropdown."""
     curr_target = initial_target
-
-    print(
-        f"  {DIM}[Ctrl+C] Exit  {bullet}  [Enter] Re-scan  {bullet}  "
-        f"[/aibom] Bill of Materials  {bullet}  [/compliance] Matrix  {bullet}  [/help] Help{RESET}"
-    )
 
     while True:
         try:
-            raw = input(f"  {GRAY_MUTED}>{RESET} ").strip()
+            if is_fancy and sys.stdin.isatty():
+                raw = InteractivePrompt.ask(utf8=True)
+            else:
+                raw = input(f"  {GRAY_MUTED}>{RESET} ").strip()
         except (KeyboardInterrupt, EOFError):
             print(f"\n{GRAY_MUTED}Exiting Orvyen Agentic. Goodbye!{RESET}\n")
             return 0
@@ -166,10 +163,6 @@ def interactive_loop(
             res = engine.run()
             res.aibom = AIBOMCompiler.compile(res)
             ConsoleReporter.print_result(res, min_severity=min_sev, compact=is_compact, fancy=is_fancy)
-            print(
-                f"  {DIM}[Ctrl+C] Exit  {bullet}  [Enter] Re-scan  {bullet}  "
-                f"[/aibom] Bill of Materials  {bullet}  [/compliance] Matrix  {bullet}  [/help] Help{RESET}"
-            )
 
         elif cmd in ("/secure", "secure"):
             if is_fancy:
@@ -181,10 +174,6 @@ def interactive_loop(
             res = engine.run()
             res.aibom = AIBOMCompiler.compile(res)
             ConsoleReporter.print_result(res, min_severity=min_sev, compact=is_compact, fancy=is_fancy)
-            print(
-                f"  {DIM}[Ctrl+C] Exit  {bullet}  [Enter] Re-scan  {bullet}  "
-                f"[/aibom] Bill of Materials  {bullet}  [/compliance] Matrix  {bullet}  [/help] Help{RESET}"
-            )
 
         elif cmd in ("/vulnerable", "vulnerable"):
             if is_fancy:
@@ -196,20 +185,12 @@ def interactive_loop(
             res = engine.run()
             res.aibom = AIBOMCompiler.compile(res)
             ConsoleReporter.print_result(res, min_severity=min_sev, compact=is_compact, fancy=is_fancy)
-            print(
-                f"  {DIM}[Ctrl+C] Exit  {bullet}  [Enter] Re-scan  {bullet}  "
-                f"[/aibom] Bill of Materials  {bullet}  [/compliance] Matrix  {bullet}  [/help] Help{RESET}"
-            )
 
         elif cmd in ("/aibom", "aibom"):
             engine = ScanEngine(curr_target)
             res = engine.run()
             res.aibom = AIBOMCompiler.compile(res)
             ConsoleReporter.print_aibom(res.aibom, utf8=is_fancy)
-            print(
-                f"  {DIM}[Ctrl+C] Exit  {bullet}  [Enter] Re-scan  {bullet}  "
-                f"[/aibom] Bill of Materials  {bullet}  [/compliance] Matrix  {bullet}  [/help] Help{RESET}"
-            )
 
         elif cmd in ("/compliance", "compliance"):
             engine = ScanEngine(curr_target)
@@ -217,24 +198,26 @@ def interactive_loop(
             imda = IMDAComplianceEvaluator.evaluate(res.findings)
             owasp = OWASPComplianceEvaluator.evaluate(res.findings)
             ConsoleReporter.print_compliance(imda, owasp, utf8=is_fancy)
-            print(
-                f"  {DIM}[Ctrl+C] Exit  {bullet}  [Enter] Re-scan  {bullet}  "
-                f"[/aibom] Bill of Materials  {bullet}  [/compliance] Matrix  {bullet}  [/help] Help{RESET}"
-            )
 
         elif cmd in ("/help", "help"):
             ConsoleReporter.print_help(utf8=is_fancy)
-            print(
-                f"  {DIM}[Ctrl+C] Exit  {bullet}  [Enter] Re-scan  {bullet}  "
-                f"[/aibom] Bill of Materials  {bullet}  [/compliance] Matrix  {bullet}  [/help] Help{RESET}"
-            )
 
         elif cmd in ("/clear", "clear", "cls"):
             os.system("cls" if os.name == "nt" else "clear")
             ConsoleReporter.print_header(None, fancy=is_fancy)
 
         else:
-            print(f"{YELLOW}Unknown command '{raw}'. Type /help for available commands or press Ctrl+C to exit.{RESET}")
+            potential = Path(raw)
+            if potential.exists():
+                curr_target = potential
+                if is_fancy:
+                    os.system("cls" if os.name == "nt" else "clear")
+                engine = ScanEngine(curr_target)
+                res = engine.run()
+                res.aibom = AIBOMCompiler.compile(res)
+                ConsoleReporter.print_result(res, min_severity=min_sev, compact=is_compact, fancy=is_fancy)
+            else:
+                print(f"  {YELLOW}Unknown command '{raw}'. Type /help for available commands or press Ctrl+C to exit.{RESET}")
 
 
 def main(argv: list[str] | None = None) -> int:

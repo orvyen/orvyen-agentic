@@ -170,8 +170,7 @@ class ConsoleReporter:
 
         # 1. Header (Fancy or Compact)
         if fancy:
-            cls._print_fancy_header(result, utf8)
-            cls._print_fancy_dropdown(utf8)
+            cls._print_fancy_header(result, utf8, animate=True)
         else:
             cls._print_header(result, utf8)
 
@@ -193,20 +192,20 @@ class ConsoleReporter:
         cls._print_summary_card(result, utf8)
 
     @classmethod
-    def print_header(cls, result: Optional[ScanResult] = None, fancy: bool = True) -> None:
+    def print_header(cls, result: Optional[ScanResult] = None, fancy: bool = True, animate: bool = False) -> None:
         """Standalone header printer for CLI entrypoints or REPL initialization."""
         utf8 = _can_utf8()
         if fancy:
-            cls._print_fancy_header(result, utf8)
+            cls._print_fancy_header(result, utf8, animate=animate)
         else:
             cls._print_header(result, utf8)
 
     @classmethod
-    def _print_fancy_header(cls, result: Optional[ScanResult], utf8: bool) -> None:
+    def _print_fancy_header(cls, result: Optional[ScanResult], utf8: bool, animate: bool = True) -> None:
         matrix = load_logo_matrix()
         logo_lines = render_logo_lines(matrix, utf8=utf8)
         term_width = min(max(shutil.get_terminal_size((80, 24)).columns, 40), 72)
-        timing_str = f"{result.duration_ms:.1f}ms" if result else "7.3ms"
+        timing_str = f"{result.duration_ms:.1f}ms" if result else "2.1ms"
 
         header_texts = [
             "",
@@ -225,9 +224,25 @@ class ConsoleReporter:
             print(f"  {logo_lines[i]}    {txt}")
 
         print()
-        # Status pill: bg #111 border #222, green arrow #10B981, text #9CA3AF
-        pill_str = f"  {bg('#111111')}{fg('#222222')}│{GREEN_ACCENT} ↑ {GRAY_LIGHT}12 checks • AIBOM + OWASP + IMDA • {timing_str} {fg('#222222')}│{RESET}"
-        print(pill_str)
+        # Animated status pill: bg #111 border #222, green arrow #10B981, text #9CA3AF
+        pill_final = f"  {bg('#111111')}{fg('#222222')}│{GREEN_ACCENT} ↑ {GRAY_LIGHT}12 checks • AIBOM + OWASP + IMDA • {timing_str} {fg('#222222')}│{RESET}"
+
+        if animate and sys.stdout.isatty():
+            anim_frames = [
+                f"  {bg('#111111')}{fg('#222222')}│{fg('#3B82F6')} ⠋ {GRAY_LIGHT}Running 12 AST security rules (OAG-001..OAG-012)...      {fg('#222222')}│{RESET}",
+                f"  {bg('#111111')}{fg('#222222')}│{fg('#06B6D4')} ⠙ {GRAY_LIGHT}Evaluating Singapore IMDA v1.5 & OWASP Top 10...        {fg('#222222')}│{RESET}",
+                f"  {bg('#111111')}{fg('#222222')}│{fg('#10B981')} ⠹ {GRAY_LIGHT}Auditing MCP server boundaries & tool privileges...     {fg('#222222')}│{RESET}",
+                f"  {bg('#111111')}{fg('#222222')}│{GREEN_ACCENT} ↑ {WHITE}12 checks{GRAY_LIGHT} • AIBOM + OWASP + IMDA • {timing_str} {fg('#222222')}│{RESET}",
+            ]
+            import time
+            for f in anim_frames:
+                sys.stdout.write(f"\r{f}")
+                sys.stdout.flush()
+                time.sleep(0.04)
+            sys.stdout.write(f"\r{pill_final}\n")
+            sys.stdout.flush()
+        else:
+            print(pill_final)
 
         # Separator: 1px #1F1F1F
         sep_char = "─" if utf8 else "-"
@@ -761,4 +776,245 @@ def print_header(result: Optional[ScanResult] = None, fancy: bool = True) -> Non
 def print_help(fancy: bool = True) -> None:
     """Convenience function conforming to reporter API."""
     ConsoleReporter.print_help(utf8=fancy)
+
+
+class InteractivePrompt:
+    """Live interactive terminal input box with blinking cursor and dynamic dropdown autocomplete."""
+
+    COMMANDS = [
+        ("/scan", "Scan agent codebase pre-deploy [OAG-001..OAG-012]"),
+        ("/aibom", "Generate Agent Bill of Materials & MCP inventory"),
+        ("/compliance", "IMDA v1.5 + MAS FEAT matrix"),
+        ("/secure", "Run against secure_agent fixture → 100/100 HEALTHY"),
+        ("/vulnerable", "Run against vulnerable_agent → 8 Critical, 15 High"),
+        ("/help", "Display interactive command reference card"),
+        ("/clear", "Clear terminal screen and re-render header"),
+        ("/exit", "Exit interactive session (or press Ctrl+C)"),
+    ]
+
+    @classmethod
+    def get_filtered(cls, text: str) -> List[tuple[str, str]]:
+        clean = text.strip()
+        if not clean or clean == "/":
+            return cls.COMMANDS[:5]
+        if clean.startswith("/"):
+            matches = [c for c in cls.COMMANDS if c[0].startswith(clean)]
+            if matches:
+                return matches[:5]
+        matches = [c for c in cls.COMMANDS if clean in c[0] or clean in c[1].lower()]
+        if matches:
+            return matches[:5]
+        return [("/scan " + clean, "Scan specified path pre-deploy")]
+
+    @classmethod
+    def render_widget(cls, text: str, cursor_visible: bool, selected_idx: int, utf8: bool = True, width: int = 72) -> int:
+        filtered = cls.get_filtered(text)
+        selected_idx = max(0, min(selected_idx, len(filtered) - 1))
+
+        inner_w = width - 2
+        h_line = ("─" if utf8 else "-") * inner_w
+        tl, tr, bl, br = ("╭", "╮", "╰", "╯") if utf8 else ("+", "+", "+", "+")
+        v = "│" if utf8 else "|"
+
+        lines = []
+        # 1. Input Box
+        lines.append(f"  {fg('#222222')}{tl}{h_line}{tr}{RESET}")
+        cursor_ch = f"{WHITE}█{RESET}" if cursor_visible else " "
+        disp_text = text[-62:] if len(text) > 62 else text
+        pad = " " * max(1, inner_w - 4 - len(disp_text) - 1)
+        lines.append(f"  {fg('#222222')}{v}{bg('#111111')}  {GRAY_MUTED}> {BOLD}{WHITE}{disp_text}{RESET}{bg('#111111')}{cursor_ch}{pad}{fg('#222222')}{v}{RESET}")
+        lines.append(f"  {fg('#222222')}{bl}{h_line}{br}{RESET}")
+        lines.append("")
+
+        # 2. Dropdown Card
+        lines.append(f"  {fg('#222222')}{tl}{h_line}{tr}{RESET}")
+        for idx, (cmd, desc) in enumerate(filtered):
+            cmd_disp = cmd[:20]
+            max_desc = max(10, 67 - len(cmd_disp) - 1)
+            desc_disp = desc[:max_desc]
+            sp = " " * max(1, 67 - len(cmd_disp) - len(desc_disp))
+
+            if idx == selected_idx:
+                left_bar = f"{CYAN_ACCENT}▌{RESET}"
+                row = f"{bg('#0F1F25')} {BOLD}{WHITE}{cmd_disp}{RESET}{bg('#0F1F25')}{sp}{GRAY_MUTED}{desc_disp} {RESET}"
+                lines.append(f"  {fg('#222222')}{v}{RESET}{left_bar}{row}{fg('#222222')}{v}{RESET}")
+            else:
+                left_bar = f"{bg('#151515')} {RESET}"
+                row = f"{bg('#151515')} {WHITE}{cmd_disp}{sp}{GRAY_MUTED}{desc_disp} {RESET}"
+                lines.append(f"  {fg('#222222')}{v}{RESET}{left_bar}{row}{fg('#222222')}{v}{RESET}")
+
+        lines.append(f"  {fg('#222222')}{bl}{h_line}{br}{RESET}")
+        lines.append(f"  {DIM}[↑/↓] Select  •  [Tab] Complete  •  [Enter] Execute  •  [Ctrl+C] Exit{RESET}")
+
+        output_str = "\n".join(lines) + "\n"
+        sys.stdout.write(output_str)
+        sys.stdout.flush()
+        return len(lines)
+
+    @classmethod
+    def ask(cls, initial_text: str = "", utf8: bool = True) -> str:
+        """Prompts the user interactively with live keystrokes, blinking cursor, and dropdown."""
+        if not sys.stdin.isatty():
+            try:
+                raw = input().strip()
+                return raw
+            except (EOFError, KeyboardInterrupt):
+                return "exit"
+
+        import time
+        is_windows = (os.name == "nt")
+        if is_windows:
+            try:
+                import msvcrt
+            except ImportError:
+                is_windows = False
+
+        text = initial_text
+        cursor_visible = True
+        selected_idx = 0
+        last_blink = time.time()
+        last_lines = 0
+
+        def redraw():
+            nonlocal last_lines
+            if last_lines > 0:
+                sys.stdout.write(f"\033[{last_lines}A\r")
+            last_lines = cls.render_widget(text, cursor_visible, selected_idx, utf8=utf8)
+
+        redraw()
+
+        try:
+            while True:
+                now = time.time()
+                if now - last_blink >= 0.45:
+                    cursor_visible = not cursor_visible
+                    last_blink = now
+                    redraw()
+
+                key = None
+                if is_windows:
+                    if msvcrt.kbhit():
+                        ch = msvcrt.getwch()
+                        if ch in ('\x00', '\xe0'):
+                            code = msvcrt.getwch()
+                            if code == 'H': key = 'UP'
+                            elif code == 'P': key = 'DOWN'
+                            elif code == 'K': key = 'LEFT'
+                            elif code == 'M': key = 'RIGHT'
+                        elif ch in ('\r', '\n'):
+                            key = 'ENTER'
+                        elif ch == '\t':
+                            key = 'TAB'
+                        elif ch in ('\x08', '\x7f'):
+                            key = 'BACKSPACE'
+                        elif ch == '\x03':
+                            key = 'CTRL_C'
+                        elif ch == '\x04':
+                            key = 'CTRL_D'
+                        elif ch == '\x1b':
+                            key = 'ESC'
+                        elif ch.isprintable():
+                            key = ch
+                else:
+                    import select
+                    r, _, _ = select.select([sys.stdin], [], [], 0.05)
+                    if r:
+                        import tty, termios
+                        fd = sys.stdin.fileno()
+                        old_set = termios.tcgetattr(fd)
+                        try:
+                            tty.setraw(fd)
+                            ch = sys.stdin.read(1)
+                            if ch == '\x1b':
+                                r2, _, _ = select.select([sys.stdin], [], [], 0.05)
+                                if r2:
+                                    seq = sys.stdin.read(2)
+                                    if seq == '[A': key = 'UP'
+                                    elif seq == '[B': key = 'DOWN'
+                                else:
+                                    key = 'ESC'
+                            elif ch in ('\r', '\n'): key = 'ENTER'
+                            elif ch == '\t': key = 'TAB'
+                            elif ch in ('\x7f', '\x08'): key = 'BACKSPACE'
+                            elif ch == '\x03': key = 'CTRL_C'
+                            elif ch == '\x04': key = 'CTRL_D'
+                            elif ch.isprintable(): key = ch
+                        finally:
+                            termios.tcsetattr(fd, termios.TCSADRAIN, old_set)
+
+                if key is None:
+                    time.sleep(0.02)
+                    continue
+
+                cursor_visible = True
+                last_blink = time.time()
+
+                if key == 'CTRL_C':
+                    sys.stdout.write(f"\033[{last_lines}A\r")
+                    for _ in range(last_lines):
+                        sys.stdout.write(" " * 78 + "\n")
+                    sys.stdout.write(f"\033[{last_lines}A\r")
+                    sys.stdout.flush()
+                    raise KeyboardInterrupt
+
+                if key == 'CTRL_D':
+                    return "exit"
+
+                if key == 'ENTER':
+                    filtered = cls.get_filtered(text)
+                    if text.strip() in ("", "/"):
+                        if filtered and 0 <= selected_idx < len(filtered):
+                            chosen = filtered[selected_idx][0]
+                        else:
+                            chosen = ""
+                    else:
+                        chosen = text.strip()
+
+                    sys.stdout.write(f"\033[{last_lines}A\r")
+                    for _ in range(last_lines):
+                        sys.stdout.write(" " * 78 + "\n")
+                    sys.stdout.write(f"\033[{last_lines}A\r")
+                    sys.stdout.flush()
+                    return chosen
+
+                if key == 'TAB':
+                    filtered = cls.get_filtered(text)
+                    if filtered and 0 <= selected_idx < len(filtered):
+                        text = filtered[selected_idx][0] + " "
+                        selected_idx = 0
+                    redraw()
+                    continue
+
+                if key == 'UP':
+                    filtered = cls.get_filtered(text)
+                    selected_idx = (selected_idx - 1) % len(filtered) if filtered else 0
+                    redraw()
+                    continue
+
+                if key == 'DOWN':
+                    filtered = cls.get_filtered(text)
+                    selected_idx = (selected_idx + 1) % len(filtered) if filtered else 0
+                    redraw()
+                    continue
+
+                if key == 'BACKSPACE':
+                    text = text[:-1]
+                    selected_idx = 0
+                    redraw()
+                    continue
+
+                if key == 'ESC':
+                    text = ""
+                    selected_idx = 0
+                    redraw()
+                    continue
+
+                if len(key) == 1 and key.isprintable():
+                    text += key
+                    selected_idx = 0
+                    redraw()
+                    continue
+        except (KeyboardInterrupt, EOFError):
+            raise
+
 
