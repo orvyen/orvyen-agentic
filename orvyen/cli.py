@@ -4,6 +4,8 @@ Command line interface for Orvyen Agentic.
 
 from __future__ import annotations
 import argparse
+import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -12,11 +14,24 @@ from orvyen.core.models import Severity
 from orvyen.core.engine import ScanEngine
 from orvyen.compliance.aibom import AIBOMCompiler
 from orvyen.compliance.license_gate import is_valid_license
+from orvyen.compliance.imda_matrix import IMDAComplianceEvaluator
+from orvyen.compliance.owasp_matrix import OWASPComplianceEvaluator
 from orvyen.reporters.console import ConsoleReporter
 from orvyen.reporters.json_reporter import JSONReporter
 from orvyen.reporters.html_reporter import HTMLReporter
 from orvyen.reporters.pdf_reporter import PDFReporter
 from orvyen.reporters.sarif_reporter import SARIFReporter
+
+# Terminal styling primitives
+CYAN = "\033[38;5;44m" if os.environ.get("COLORTERM") else "\033[36m"
+WHITE = "\033[38;5;255m" if os.environ.get("COLORTERM") else "\033[97m"
+GREEN = "\033[38;5;40m" if os.environ.get("COLORTERM") else "\033[32m"
+YELLOW = "\033[38;5;214m" if os.environ.get("COLORTERM") else "\033[33m"
+RED = "\033[38;5;196m" if os.environ.get("COLORTERM") else "\033[31m"
+GRAY = "\033[38;5;244m" if os.environ.get("COLORTERM") else "\033[90m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+RESET = "\033[0m"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -79,6 +94,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Display Claude Code-style interactive terminal UI with block art logo and autocomplete menu",
     )
     scan_parser.add_argument(
+        "-i", "--interactive",
+        action="store_true",
+        default=None,
+        help="Keep session running in interactive mode with command prompt and keyboard shortcuts",
+    )
+    scan_parser.add_argument(
+        "--no-interactive",
+        action="store_true",
+        help="Disable interactive mode and exit immediately after scan",
+    )
+    scan_parser.add_argument(
         "-q", "--quiet",
         action="store_true",
         help="Suppress terminal decoration and summary banners",
@@ -91,6 +117,135 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     return parser
+
+
+def interactive_loop(
+    initial_target: Path,
+    min_sev: Severity,
+    is_compact: bool,
+    is_fancy: bool,
+    license_key: str | None = None,
+) -> int:
+    """Keeps the user in the interactive terminal session with keyboard shortcuts and commands."""
+    bullet = "•"
+    curr_target = initial_target
+
+    print(
+        f"  {DIM}[Ctrl+C] Exit  {bullet}  [Enter] Re-scan  {bullet}  "
+        f"[/aibom] Bill of Materials  {bullet}  [/compliance] Matrix  {bullet}  [/help] Help{RESET}"
+    )
+
+    while True:
+        try:
+            raw = input(f"{CYAN}>{RESET} ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print(f"\n{GRAY}Exiting Orvyen Agentic. Goodbye!{RESET}\n")
+            return 0
+
+        cmd = raw.lower()
+        if cmd in ("exit", "quit", "q", "/exit", ":q"):
+            print(f"{GRAY}Exiting Orvyen Agentic. Goodbye!{RESET}\n")
+            return 0
+
+        elif cmd in ("", "/scan", "scan") or cmd.startswith(("/scan ", "scan ")):
+            parts = raw.split(maxsplit=1)
+            if len(parts) > 1 and parts[1].strip():
+                new_target = Path(parts[1].strip())
+                if new_target.exists():
+                    curr_target = new_target
+                else:
+                    print(f"{RED}Error: Path '{parts[1].strip()}' does not exist.{RESET}")
+                    continue
+
+            engine = ScanEngine(curr_target)
+            res = engine.run()
+            res.aibom = AIBOMCompiler.compile(res)
+            ConsoleReporter.print_result(res, min_severity=min_sev, compact=is_compact, fancy=is_fancy)
+            print(
+                f"  {DIM}[Ctrl+C] Exit  {bullet}  [Enter] Re-scan  {bullet}  "
+                f"[/aibom] Bill of Materials  {bullet}  [/compliance] Matrix  {bullet}  [/help] Help{RESET}"
+            )
+
+        elif cmd in ("/secure", "secure"):
+            curr_target = Path("tests/fixtures/secure_agent")
+            if not curr_target.exists():
+                curr_target = Path(__file__).parent.parent / "tests" / "fixtures" / "secure_agent"
+            engine = ScanEngine(curr_target)
+            res = engine.run()
+            res.aibom = AIBOMCompiler.compile(res)
+            ConsoleReporter.print_result(res, min_severity=min_sev, compact=is_compact, fancy=is_fancy)
+            print(
+                f"  {DIM}[Ctrl+C] Exit  {bullet}  [Enter] Re-scan  {bullet}  "
+                f"[/aibom] Bill of Materials  {bullet}  [/compliance] Matrix  {bullet}  [/help] Help{RESET}"
+            )
+
+        elif cmd in ("/vulnerable", "vulnerable"):
+            curr_target = Path("tests/fixtures/vulnerable_agent")
+            if not curr_target.exists():
+                curr_target = Path(__file__).parent.parent / "tests" / "fixtures" / "vulnerable_agent"
+            engine = ScanEngine(curr_target)
+            res = engine.run()
+            res.aibom = AIBOMCompiler.compile(res)
+            ConsoleReporter.print_result(res, min_severity=min_sev, compact=is_compact, fancy=is_fancy)
+            print(
+                f"  {DIM}[Ctrl+C] Exit  {bullet}  [Enter] Re-scan  {bullet}  "
+                f"[/aibom] Bill of Materials  {bullet}  [/compliance] Matrix  {bullet}  [/help] Help{RESET}"
+            )
+
+        elif cmd in ("/aibom", "aibom"):
+            engine = ScanEngine(curr_target)
+            res = engine.run()
+            res.aibom = AIBOMCompiler.compile(res)
+            md = AIBOMCompiler.to_markdown(res.aibom, license_key=license_key)
+            print()
+            print(md)
+            print()
+
+        elif cmd in ("/compliance", "compliance"):
+            engine = ScanEngine(curr_target)
+            res = engine.run()
+            imda = IMDAComplianceEvaluator.evaluate(res.findings)
+            owasp = OWASPComplianceEvaluator.evaluate(res.findings)
+            print()
+            print(f"{BOLD}{WHITE}Singapore IMDA AI Governance Matrix:{RESET}")
+            print(f"  Overall Status:  {GREEN if imda['overall_status']=='COMPLIANT' else RED}{imda['overall_status']}{RESET} ({imda.get('score_percentage', 0)}% aligned)")
+            for p_name, p_data in imda.get("pillars", {}).items():
+                p_status = p_data.get("status")
+                p_color = GREEN if p_status == "COMPLIANT" else (YELLOW if p_status == "WARNING" else RED)
+                print(f"  {WHITE}{p_name}:{RESET} {p_color}{p_status}{RESET} ({p_data.get('passed_rules', 0)}/{len(p_data.get('rules', []))} rules pass)")
+            print()
+            print(f"{BOLD}{WHITE}OWASP Top 10 for LLM Applications (2025):{RESET}")
+            print(f"  Overall Status:  {GREEN if owasp['overall_status']=='PASS' else RED}{owasp['overall_status']}{RESET} ({owasp.get('score_percentage', 0)}% category pass)")
+            for item in owasp.get("categories", []):
+                cat_status = item.get("status")
+                cat_color = GREEN if cat_status == "PASS" else RED
+                print(f"  {WHITE}{item.get('code')}: {item.get('title')}{RESET} -> {cat_color}{cat_status}{RESET}")
+            print()
+
+        elif cmd in ("/help", "help"):
+            print()
+            print(f"{BOLD}{WHITE}Orvyen Agentic Interactive Commands:{RESET}")
+            print(f"  {CYAN}/scan [path]{RESET}    - Re-scan current target or specified path")
+            print(f"  {CYAN}/aibom{RESET}          - View Agent Bill of Materials")
+            print(f"  {CYAN}/compliance{RESET}     - View detailed IMDA & OWASP compliance breakdown")
+            print(f"  {CYAN}/secure{RESET}         - Run benchmark against secure_agent fixture")
+            print(f"  {CYAN}/vulnerable{RESET}     - Run benchmark against vulnerable_agent fixture")
+            print(f"  {CYAN}/clear{RESET}          - Clear terminal screen")
+            print(f"  {CYAN}/help{RESET}           - Show this help message")
+            print(f"  {CYAN}/exit, q{RESET}        - Exit interactive session")
+            print()
+            print(f"{BOLD}{WHITE}Keyboard Shortcuts:{RESET}")
+            print(f"  {GREEN}Ctrl+C{RESET}          - Exit session immediately")
+            print(f"  {GREEN}Ctrl+D / Ctrl+Z{RESET} - Exit session (EOF)")
+            print(f"  {GREEN}Enter{RESET}           - Re-run scan on current target")
+            print()
+
+        elif cmd in ("/clear", "clear", "cls"):
+            os.system("cls" if os.name == "nt" else "clear")
+            ConsoleReporter.print_header(None, fancy=is_fancy)
+
+        else:
+            print(f"{YELLOW}Unknown command '{raw}'. Type /help for available commands or press Ctrl+C to exit.{RESET}")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -123,6 +278,10 @@ def main(argv: list[str] | None = None) -> int:
             args.compact = False
         if not hasattr(args, "fancy"):
             args.fancy = False
+        if not hasattr(args, "interactive"):
+            args.interactive = None
+        if not hasattr(args, "no_interactive"):
+            args.no_interactive = False
         if not hasattr(args, "quiet"):
             args.quiet = False
 
@@ -148,13 +307,29 @@ def main(argv: list[str] | None = None) -> int:
         print(md_aibom)
         return 0
 
+    is_compact = getattr(args, "compact", False)
+    is_fancy = getattr(args, "fancy", False) or (
+        sys.stdout.isatty() and not is_compact
+    )
+
+    # Determine whether to enter interactive mode
+    if getattr(args, "no_interactive", False):
+        is_interactive = False
+    elif getattr(args, "interactive", False):
+        is_interactive = True
+    else:
+        is_interactive = (
+            sys.stdin.isatty()
+            and sys.stdout.isatty()
+            and not args.quiet
+            and args.format == "terminal"
+            and not os.environ.get("CI")
+            and not os.environ.get("ORVYEN_NO_INTERACTIVE")
+        )
+
     # Format handling
     if args.format in ("terminal", "all"):
         if not args.quiet:
-            is_compact = getattr(args, "compact", False)
-            is_fancy = getattr(args, "fancy", False) or (
-                sys.stdout.isatty() and not is_compact
-            )
             ConsoleReporter.print_result(
                 result,
                 min_severity=min_sev,
@@ -224,7 +399,18 @@ def main(argv: list[str] | None = None) -> int:
                     f"at or above '{args.fail_on}' threshold.\033[0m",
                     file=sys.stderr,
                 )
-            return 1
+            if not is_interactive:
+                return 1
+
+    # Enter interactive session loop if enabled
+    if is_interactive:
+        return interactive_loop(
+            initial_target=target_path,
+            min_sev=min_sev,
+            is_compact=is_compact,
+            is_fancy=is_fancy,
+            license_key=getattr(args, "license_key", None),
+        )
 
     return 0
 
