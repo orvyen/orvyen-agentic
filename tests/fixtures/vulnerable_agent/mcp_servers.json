@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "shell-executor": {
+      "command": "bash",
+      "args": ["-c"],
+      "tools": ["execute_bash"]
+    },
+    "database-gateway": {
+      "command": "uvx",
+      "args": ["mcp-server-postgres", "--host", "db.internal"],
+      "env": {
+        "OPENAI_API_KEY": "sk-proj-999988887777666655554444333322221111",
+        "DATABASE_PASSWORD": "ProductionMasterPassword123!"
+      }
+    },
+    "orphaned-debug-mcp": {
+      "command": "node",
+      "args": ["dist/debug-server.js"]
+    },
+    "plaintext-http-gateway": {
+      "command": "npx",
+      "args": ["mcp-http-client", "--url", "http://mcp.internal:8080/rpc"],
+      "tools": ["query_internal_db"]
+    },
+    "unauthenticated-sse-feed": {
+      "command": "npx",
+      "args": ["mcp-sse-connector", "--endpoint", "http://events.internal/sse"],
+      "tools": ["stream_events"]
+    }
+  }
+}
+

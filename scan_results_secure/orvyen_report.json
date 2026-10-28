@@ -1,0 +1,339 @@
+{
+  "target_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\secure_agent",
+  "files_scanned": 3,
+  "duration_ms": 7.34,
+  "summary": {
+    "security_score": 100,
+    "total_findings": 0,
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "info": 0
+  },
+  "findings": [],
+  "tools": [
+    {
+      "name": "mcp::enterprise-docs",
+      "framework": "mcp",
+      "privilege": "READ",
+      "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\secure_agent\\mcp_servers.json",
+      "line_number": 1,
+      "dangerous_sinks": [],
+      "is_audited": false,
+      "is_bound": false
+    },
+    {
+      "name": "fetch_account_summary",
+      "framework": "langchain",
+      "privilege": "READ",
+      "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\secure_agent\\tools.py",
+      "line_number": 12,
+      "dangerous_sinks": [],
+      "is_audited": true,
+      "is_bound": true
+    },
+    {
+      "name": "search_knowledge_base",
+      "framework": "langchain",
+      "privilege": "READ",
+      "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\secure_agent\\tools.py",
+      "line_number": 20,
+      "dangerous_sinks": [],
+      "is_audited": true,
+      "is_bound": true
+    }
+  ],
+  "agents": [
+    {
+      "name": "agent",
+      "framework": "langgraph",
+      "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\secure_agent\\agent.py",
+      "line_number": 36,
+      "model_name": null,
+      "bound_tools": [],
+      "recursion_limit": 10,
+      "step_limit": null,
+      "has_audit_logging": false
+    },
+    {
+      "name": "tools",
+      "framework": "langgraph",
+      "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\secure_agent\\agent.py",
+      "line_number": 37,
+      "model_name": null,
+      "bound_tools": [],
+      "recursion_limit": 10,
+      "step_limit": null,
+      "has_audit_logging": false
+    },
+    {
+      "name": "Research Assistant",
+      "framework": "crewai",
+      "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\secure_agent\\agent.py",
+      "line_number": 47,
+      "model_name": null,
+      "bound_tools": [
+        "fetch_account_summary",
+        "search_knowledge_base",
+        "enterprise-docs"
+      ],
+      "recursion_limit": null,
+      "step_limit": 5,
+      "has_audit_logging": false
+    }
+  ],
+  "mcp_servers": [
+    {
+      "name": "enterprise-docs",
+      "command": "uvx",
+      "args": [
+        "mcp-server-knowledge",
+        "--read-only"
+      ],
+      "tools": [
+        "search_docs"
+      ],
+      "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\secure_agent\\mcp_servers.json"
+    }
+  ],
+  "aibom": {
+    "$schema": "https://orvyen.ai/schemas/aibom-v1.json",
+    "spec_version": "1.0.0",
+    "metadata": {
+      "timestamp": "2026-10-28T10:26:15.145750+00:00",
+      "scanner": "Orvyen Agentic Static Security Engine",
+      "scanner_version": "0.3.0",
+      "target_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\secure_agent",
+      "files_scanned": 3,
+      "security_score": 100,
+      "frameworks": [
+        "mcp",
+        "crewai",
+        "langchain",
+        "langgraph"
+      ]
+    },
+    "agents": [
+      {
+        "name": "agent",
+        "framework": "langgraph",
+        "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\secure_agent\\agent.py",
+        "line_number": 36,
+        "bound_tools": [],
+        "recursion_limit": 10,
+        "step_limit": null
+      },
+      {
+        "name": "tools",
+        "framework": "langgraph",
+        "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\secure_agent\\agent.py",
+        "line_number": 37,
+        "bound_tools": [],
+        "recursion_limit": 10,
+        "step_limit": null
+      },
+      {
+        "name": "Research Assistant",
+        "framework": "crewai",
+        "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\secure_agent\\agent.py",
+        "line_number": 47,
+        "bound_tools": [
+          "fetch_account_summary",
+          "search_knowledge_base",
+          "enterprise-docs"
+        ],
+        "recursion_limit": null,
+        "step_limit": 5
+      }
+    ],
+    "tools": {
+      "total_tools": 3,
+      "by_privilege": {
+        "admin": [],
+        "execute": [],
+        "write": [],
+        "read": [
+          {
+            "name": "mcp::enterprise-docs",
+            "framework": "mcp",
+            "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\secure_agent\\mcp_servers.json",
+            "line_number": 1,
+            "dangerous_sinks": [],
+            "is_audited": false,
+            "is_bound": true
+          },
+          {
+            "name": "fetch_account_summary",
+            "framework": "langchain",
+            "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\secure_agent\\tools.py",
+            "line_number": 12,
+            "dangerous_sinks": [],
+            "is_audited": true,
+            "is_bound": true
+          },
+          {
+            "name": "search_knowledge_base",
+            "framework": "langchain",
+            "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\secure_agent\\tools.py",
+            "line_number": 20,
+            "dangerous_sinks": [],
+            "is_audited": true,
+            "is_bound": true
+          }
+        ]
+      }
+    },
+    "mcp_servers": [
+      {
+        "name": "enterprise-docs",
+        "command": "uvx",
+        "args": [
+          "mcp-server-knowledge",
+          "--read-only"
+        ],
+        "env_keys": [
+          "DOC_API_KEY"
+        ],
+        "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\secure_agent\\mcp_servers.json"
+      }
+    ],
+    "compliance": {
+      "singapore_imda": {
+        "score_percentage": 100,
+        "overall_status": "COMPLIANT",
+        "pillars": {
+          "Pillar 1": {
+            "name": "Assess and Bound Risk Upfront",
+            "description": "Establish operational boundaries, maximum recursion limits, and failure fallback modes.",
+            "status": "COMPLIANT",
+            "is_compliant": true,
+            "violation_count": 0,
+            "severities": {
+              "critical": 0,
+              "high": 0,
+              "medium": 0,
+              "low": 0
+            },
+            "governance_guidelines": "MAS AI Risk Management Guidelines / IMDA Agentic AI v1.5"
+          },
+          "Pillar 2": {
+            "name": "Make Humans Meaningfully Accountable",
+            "description": "Ensure clear tool ownership, avoid orphaned components, and record comprehensive audit logs.",
+            "status": "COMPLIANT",
+            "is_compliant": true,
+            "violation_count": 0,
+            "severities": {
+              "critical": 0,
+              "high": 0,
+              "medium": 0,
+              "low": 0
+            },
+            "governance_guidelines": "MAS AI Risk Management Guidelines / IMDA Agentic AI v1.5"
+          },
+          "Pillar 3": {
+            "name": "Implement Technical Controls",
+            "description": "Enforce principle of least privilege on tools, secure secret storage, PII redaction, and rate limiting.",
+            "status": "COMPLIANT",
+            "is_compliant": true,
+            "violation_count": 0,
+            "severities": {
+              "critical": 0,
+              "high": 0,
+              "medium": 0,
+              "low": 0
+            },
+            "governance_guidelines": "MAS AI Risk Management Guidelines / IMDA Agentic AI v1.5"
+          },
+          "Pillar 4": {
+            "name": "Enable End-User Responsibility",
+            "description": "Provide transparent capability disclosures, structured AIBOM manifests, and verifiable trails.",
+            "status": "COMPLIANT",
+            "is_compliant": true,
+            "violation_count": 0,
+            "severities": {
+              "critical": 0,
+              "high": 0,
+              "medium": 0,
+              "low": 0
+            },
+            "governance_guidelines": "MAS AI Risk Management Guidelines / IMDA Agentic AI v1.5"
+          }
+        },
+        "framework_version": "IMDA Model AI Governance Framework for Agentic AI (May 2026)",
+        "jurisdiction": "Singapore (IMDA / MAS)"
+      },
+      "owasp_llm_top10": {
+        "score_percentage": 100,
+        "overall_status": "PASS",
+        "items": {
+          "LLM01": {
+            "title": "Prompt Injection",
+            "description": "Manipulating LLM behavior through crafted inputs in prompts.",
+            "status": "PASS",
+            "is_pass": true,
+            "violation_count": 0,
+            "mapped_rules": [
+              "OAG-002"
+            ]
+          },
+          "LLM02": {
+            "title": "Sensitive Information Disclosure",
+            "description": "Exposing confidential data, hardcoded secrets, or PII via outputs/logs.",
+            "status": "PASS",
+            "is_pass": true,
+            "violation_count": 0,
+            "mapped_rules": [
+              "OAG-003",
+              "OAG-004",
+              "OAG-012"
+            ]
+          },
+          "LLM06": {
+            "title": "Excessive Agency",
+            "description": "Granting agents over-permissioned tools, unbounded execution, or unaudited actions.",
+            "status": "PASS",
+            "is_pass": true,
+            "violation_count": 0,
+            "mapped_rules": [
+              "OAG-001",
+              "OAG-006",
+              "OAG-008",
+              "OAG-010",
+              "OAG-011"
+            ]
+          },
+          "LLM09": {
+            "title": "Misinformation / Insecure Plugin Design",
+            "description": "Insecure MCP/plugin transport exposing tool calls to interception.",
+            "status": "PASS",
+            "is_pass": true,
+            "violation_count": 0,
+            "mapped_rules": [
+              "OAG-009"
+            ]
+          },
+          "LLM10": {
+            "title": "Unbounded Consumption",
+            "description": "Resource exhaustion and financial loss from unconstrained loops and missing budgets.",
+            "status": "PASS",
+            "is_pass": true,
+            "violation_count": 0,
+            "mapped_rules": [
+              "OAG-005",
+              "OAG-007"
+            ]
+          }
+        },
+        "standard": "OWASP Top 10 for LLM Applications"
+      }
+    },
+    "findings_summary": {
+      "total": 0,
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    }
+  }
+}

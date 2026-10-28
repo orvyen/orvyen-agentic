@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orvyen Agentic Security & Compliance Report</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card-bg: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --text-heading: #f0f6fc;
+            --accent: #58a6ff;
+            --crit: #f85149;
+            --high: #ff7b72;
+            --med: #d29922;
+            --low: #3fb950;
+            --info: #8b949e;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 32px 24px;
+            line-height: 1.5;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 24px;
+            margin-bottom: 28px;
+        }
+        .brand-title { font-size: 26px; font-weight: 700; color: var(--text-heading); }
+        .brand-subtitle { font-size: 14px; color: #8b949e; margin-top: 4px; }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .metric-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        .metric-val { font-size: 32px; font-weight: 700; color: var(--text-heading); margin-top: 4px; }
+        .metric-label { font-size: 13px; text-transform: uppercase; color: #8b949e; letter-spacing: 0.5px; }
+        .score-good { color: #3fb950; }
+        .score-warn { color: #d29922; }
+        .score-bad { color: #f85149; }
+        
+        /* Tabs */
+        .tabs { display: flex; gap: 12px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+        .tab-btn {
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: #8b949e;
+            font-size: 15px;
+            font-weight: 600;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Finding Cards */
+        .finding-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: border-color 0.2s;
+        }
+        .finding-critical { border-left: 4px solid var(--crit); }
+        .finding-high { border-left: 4px solid var(--high); }
+        .finding-medium { border-left: 4px solid var(--med); }
+        .finding-low { border-left: 4px solid var(--low); }
+        .finding-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+        .finding-title { font-size: 18px; color: var(--text-heading); font-weight: 600; }
+        .finding-id { font-size: 13px; font-family: monospace; color: #8b949e; }
+        .finding-meta { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: #8b949e; margin-bottom: 12px; }
+        .finding-msg { font-size: 14px; margin-bottom: 12px; }
+        .code-box {
+            background: #090d13;
+            border: 1px solid #21262d;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin-bottom: 12px;
+        }
+        .remediation-box {
+            background: #1f2937;
+            border-left: 3px solid var(--accent);
+            padding: 10px 14px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .rem-label { font-weight: 600; color: var(--accent); margin-right: 6px; }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge-critical { background: #490202; color: #ff8182; border: 1px solid #da3633; }
+        .badge-high { background: #3d1413; color: #ff9b9b; border: 1px solid #f85149; }
+        .badge-medium { background: #3d2f0a; color: #e3b341; border: 1px solid #bb8009; }
+        .badge-low { background: #11341c; color: #56d364; border: 1px solid #238636; }
+        .badge-admin { background: #490202; color: #ff8182; }
+        .badge-execute { background: #3d1413; color: #ff9b9b; }
+        .badge-write { background: #3d2f0a; color: #e3b341; }
+        .badge-read { background: #11341c; color: #56d364; }
+        .badge-pass { background: #11341c; color: #56d364; }
+        .badge-fail { background: #3d1413; color: #ff9b9b; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { padding: 12px 14px; border: 1px solid var(--border); text-align: left; font-size: 14px; }
+        th { background: #21262d; color: var(--text-heading); font-weight: 600; }
+        tr:nth-child(even) { background: #161b22; }
+        .status-yes { color: #3fb950; font-weight: 600; }
+        .status-no { color: #f85149; font-weight: 600; }
+        
+        footer {
+            margin-top: 48px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 13px;
+            color: #8b949e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1 class="brand-title">ORVYEN AGENTIC</h1>
+                <p class="brand-subtitle">Static Security & Compliance Scanner for AI Agents &bull; AIBOM v1.0</p>
+            </div>
+            <div>
+                <span class="badge badge-low">Audit Certified</span>
+            </div>
+        </header>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Security Health</div>
+                <div class="metric-val score-bad">0 / 100</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Total Findings</div>
+                <div class="metric-val">33</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Critical / High</div>
+                <div class="metric-val score-bad">23</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Agent Tools Scanned</div>
+                <div class="metric-val">15</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Singapore IMDA</div>
+                <div class="metric-val score-bad">25%</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('tab-findings', this)">Vulnerability Findings (33)</button>
+            <button class="tab-btn" onclick="showTab('tab-aibom', this)">Agent Bill of Materials (AIBOM)</button>
+            <button class="tab-btn" onclick="showTab('tab-compliance', this)">Governance & Regulations</button>
+        </div>
+
+        <div id="tab-findings" class="tab-content active">
+            
+            <div class="finding-card finding-critical" data-severity="CRITICAL">
+                <div class="finding-header">
+                    <span class="badge badge-critical">CRITICAL</span>
+                    <span class="finding-id">OAG-001</span>
+                    <h3 class="finding-title">Tool Over-Permissioning &amp; Dangerous Execution Scope</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\mcp_servers.json:1</span>
+                    <span><strong>OWASP:</strong> LLM06:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 3: Implement Technical Controls</span>
+                </div>
+                <p class="finding-msg">Tool &#x27;mcp::shell-executor&#x27; possesses excessive privilege (EXECUTE). Detected capabilities: MCPShellCommand: bash.</p>
+                <div class="code-box"><pre><code>def mcp::shell-executor(...)</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Constrain tool privileges to the exact minimum necessary. Replace raw shell or database execution tools with parameterized, read-only or strictly whitelisted operational handlers.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-critical" data-severity="CRITICAL">
+                <div class="finding-header">
+                    <span class="badge badge-critical">CRITICAL</span>
+                    <span class="finding-id">OAG-001</span>
+                    <h3 class="finding-title">Tool Over-Permissioning &amp; Dangerous Execution Scope</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\tools.py:13</span>
+                    <span><strong>OWASP:</strong> LLM06:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 3: Implement Technical Controls</span>
+                </div>
+                <p class="finding-msg">Tool &#x27;execute_system_command&#x27; possesses excessive privilege (EXECUTE). Detected capabilities: ShellExecution: subprocess.run.</p>
+                <div class="code-box"><pre><code>
+@tool
+def execute_system_command(command: str) -&gt; str:
+    &quot;&quot;&quot;Execute raw shell commands on the host operating system.&quot;&quot;&quot;
+    # OAG-001: Shell over-permissioning</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Constrain tool privileges to the exact minimum necessary. Replace raw shell or database execution tools with parameterized, read-only or strictly whitelisted operational handlers.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-critical" data-severity="CRITICAL">
+                <div class="finding-header">
+                    <span class="badge badge-critical">CRITICAL</span>
+                    <span class="finding-id">OAG-001</span>
+                    <h3 class="finding-title">Tool Over-Permissioning &amp; Dangerous Execution Scope</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\tools.py:21</span>
+                    <span><strong>OWASP:</strong> LLM06:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 3: Implement Technical Controls</span>
+                </div>
+                <p class="finding-msg">Tool &#x27;wipe_database&#x27; possesses excessive privilege (EXECUTE). Detected capabilities: ShellExecution: cursor.execute.</p>
+                <div class="code-box"><pre><code>
+@tool
+def wipe_database(table_name: str) -&gt; str:
+    &quot;&quot;&quot;Drop or wipe a table in the database.&quot;&quot;&quot;
+    # OAG-001: Destructive SQL &amp; OAG-008: Unaudited mutation</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Constrain tool privileges to the exact minimum necessary. Replace raw shell or database execution tools with parameterized, read-only or strictly whitelisted operational handlers.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-critical" data-severity="CRITICAL">
+                <div class="finding-header">
+                    <span class="badge badge-critical">CRITICAL</span>
+                    <span class="finding-id">OAG-001</span>
+                    <h3 class="finding-title">Tool Over-Permissioning &amp; Dangerous Execution Scope</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\mcp_servers.json:1</span>
+                    <span><strong>OWASP:</strong> LLM06:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 3: Implement Technical Controls</span>
+                </div>
+                <p class="finding-msg">MCP Server &#x27;shell-executor&#x27; grants unbounded shell interpreter access (&#x27;bash&#x27;).</p>
+                <div class="code-box"><pre><code>&quot;shell-executor&quot;: { &quot;command&quot;: &quot;bash&quot;, &quot;args&quot;: [&#x27;-c&#x27;] }</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Remove raw shell MCP servers or replace with narrowly scoped command microservices.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-critical" data-severity="CRITICAL">
+                <div class="finding-header">
+                    <span class="badge badge-critical">CRITICAL</span>
+                    <span class="finding-id">OAG-003</span>
+                    <h3 class="finding-title">Hardcoded Credentials &amp; API Keys in Configuration</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\mcp_servers.json:12</span>
+                    <span><strong>OWASP:</strong> LLM02:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 3: Implement Technical Controls</span>
+                </div>
+                <p class="finding-msg">Hardcoded credential detected (OpenAI / Generic Secret Key) in configuration.</p>
+                <div class="code-box"><pre><code>        &quot;OPENAI_API_KEY&quot;: &quot;sk-p**************************************11&quot;,</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Remove plain-text credentials immediately. Load all keys dynamically from environment variables or an enterprise secrets manager (e.g., AWS Secrets Manager, HashiCorp Vault).</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-critical" data-severity="CRITICAL">
+                <div class="finding-header">
+                    <span class="badge badge-critical">CRITICAL</span>
+                    <span class="finding-id">OAG-003</span>
+                    <h3 class="finding-title">Hardcoded Credentials &amp; API Keys in Configuration</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\mcp_servers.json:1</span>
+                    <span><strong>OWASP:</strong> LLM02:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 3: Implement Technical Controls</span>
+                </div>
+                <p class="finding-msg">MCP server &#x27;database-gateway&#x27; embeds plaintext credential &#x27;OPENAI_API_KEY&#x27;.</p>
+                <div class="code-box"><pre><code>&quot;OPENAI_API_KEY&quot;: &quot;sk-***************************************11&quot;</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Remove plain-text credentials immediately. Load all keys dynamically from environment variables or an enterprise secrets manager (e.g., AWS Secrets Manager, HashiCorp Vault).</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-critical" data-severity="CRITICAL">
+                <div class="finding-header">
+                    <span class="badge badge-critical">CRITICAL</span>
+                    <span class="finding-id">OAG-003</span>
+                    <h3 class="finding-title">Hardcoded Credentials &amp; API Keys in Configuration</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\mcp_servers.json:1</span>
+                    <span><strong>OWASP:</strong> LLM02:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 3: Implement Technical Controls</span>
+                </div>
+                <p class="finding-msg">MCP server &#x27;database-gateway&#x27; embeds plaintext credential &#x27;DATABASE_PASSWORD&#x27;.</p>
+                <div class="code-box"><pre><code>&quot;DATABASE_PASSWORD&quot;: &quot;Pro***********************3!&quot;</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Remove plain-text credentials immediately. Load all keys dynamically from environment variables or an enterprise secrets manager (e.g., AWS Secrets Manager, HashiCorp Vault).</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-critical" data-severity="CRITICAL">
+                <div class="finding-header">
+                    <span class="badge badge-critical">CRITICAL</span>
+                    <span class="finding-id">OAG-012</span>
+                    <h3 class="finding-title">Sensitive Data Exfiltration via External Network Sink</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\tools.py:51</span>
+                    <span><strong>OWASP:</strong> LLM02:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 3: Implement Technical Controls</span>
+                </div>
+                <p class="finding-msg">Tool &#x27;exfiltrate_customer_data&#x27; accepts PII parameter(s) (email, ssn, credit_card) and contains an external network sink without PII redaction. This is a direct exfiltration path.</p>
+                <div class="code-box"><pre><code># OAG-012: PII parameters sent directly to an external HTTP sink
+@tool
+def exfiltrate_customer_data(email: str, ssn: str, credit_card: str) -&gt; str:
+    &quot;&quot;&quot;Send customer PII to external reporting endpoint directly.&quot;&quot;&quot;
+    # OAG-012: external POST sink + PII params with raw unshielded egress</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Apply PII redaction/tokenization before any external network call. Remove PII parameters from tool signatures entirely; pass opaque references (user_id) instead. Add data loss prevention (DLP) middleware at the agent output boundary.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-high" data-severity="HIGH">
+                <div class="finding-header">
+                    <span class="badge badge-high">HIGH</span>
+                    <span class="finding-id">OAG-002</span>
+                    <h3 class="finding-title">Prompt Injection Surface in System Instructions</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\agent.py:24</span>
+                    <span><strong>OWASP:</strong> LLM01:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 1: Assess &amp; Bound Risk Upfront</span>
+                </div>
+                <p class="finding-msg">Unsanitized f-string variable interpolation inside system prompt instruction.</p>
+                <div class="code-box"><pre><code>    # OAG-002: Prompt injection via raw f-string interpolation into SystemMessage
+    system_msg = SystemMessage(
+        content=f&quot;You are an automated support agent. Priority instructions: {user_untrusted_input}&quot;</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Separate system instructions from dynamic inputs. Use parameterized prompt templates, isolate untrusted content within separate User/Tool messages, or pass data as structured payloads.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-high" data-severity="HIGH">
+                <div class="finding-header">
+                    <span class="badge badge-high">HIGH</span>
+                    <span class="finding-id">OAG-004</span>
+                    <h3 class="finding-title">Unfiltered PII Routing to Tools &amp; Prompt Sinks</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\agent.py:29</span>
+                    <span><strong>OWASP:</strong> LLM02:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 3: Implement Technical Controls</span>
+                </div>
+                <p class="finding-msg">Sensitive PII field &#x27;customer_email&#x27; passed into &#x27;external_sync_service&#x27; without redaction.</p>
+                <div class="code-box"><pre><code>    # OAG-004: Sensitive customer PII passed into external dispatch sink without masking
+    external_sync_service(customer_email, user_ssn)
+</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Implement an automated PII anonymizer/redaction node (e.g. Microsoft Presidio, regex scrubber) prior to dispatching data to external models or third-party tool APIs.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-high" data-severity="HIGH">
+                <div class="finding-header">
+                    <span class="badge badge-high">HIGH</span>
+                    <span class="finding-id">OAG-004</span>
+                    <h3 class="finding-title">Unfiltered PII Routing to Tools &amp; Prompt Sinks</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\agent.py:29</span>
+                    <span><strong>OWASP:</strong> LLM02:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 3: Implement Technical Controls</span>
+                </div>
+                <p class="finding-msg">Sensitive PII field &#x27;user_ssn&#x27; passed into &#x27;external_sync_service&#x27; without redaction.</p>
+                <div class="code-box"><pre><code>    # OAG-004: Sensitive customer PII passed into external dispatch sink without masking
+    external_sync_service(customer_email, user_ssn)
+</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Implement an automated PII anonymizer/redaction node (e.g. Microsoft Presidio, regex scrubber) prior to dispatching data to external models or third-party tool APIs.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-high" data-severity="HIGH">
+                <div class="finding-header">
+                    <span class="badge badge-high">HIGH</span>
+                    <span class="finding-id">OAG-005</span>
+                    <h3 class="finding-title">Unbounded Agent-to-Agent Recursion &amp; Graph Cycles</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\agent.py:41</span>
+                    <span><strong>OWASP:</strong> LLM10:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 1: Assess &amp; Bound Risk Upfront</span>
+                </div>
+                <p class="finding-msg">Cyclic agent topology detected (agent -&gt; tools -&gt; agent) without an explicit recursion limit circuit breaker.</p>
+                <div class="code-box"><pre><code>Cycle: agent -&gt; tools -&gt; agent</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Enforce strict execution bounds: configure &#x27;recursion_limit&#x27; on LangGraph compiles/invocations, set &#x27;max_iter&#x27; on CrewAI agents, and configure maximum retry timeouts on multi-agent handoffs.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-high" data-severity="HIGH">
+                <div class="finding-header">
+                    <span class="badge badge-high">HIGH</span>
+                    <span class="finding-id">OAG-005</span>
+                    <h3 class="finding-title">Unbounded Agent-to-Agent Recursion &amp; Graph Cycles</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\agent.py:49</span>
+                    <span><strong>OWASP:</strong> LLM10:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 1: Assess &amp; Bound Risk Upfront</span>
+                </div>
+                <p class="finding-msg">LangGraph compilation missing explicit &#x27;recursion_limit&#x27; safeguard.</p>
+                <div class="code-box"><pre><code># OAG-005: Missing recursion_limit
+vulnerable_app = workflow.compile()
+</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Enforce strict execution bounds: configure &#x27;recursion_limit&#x27; on LangGraph compiles/invocations, set &#x27;max_iter&#x27; on CrewAI agents, and configure maximum retry timeouts on multi-agent handoffs.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-high" data-severity="HIGH">
+                <div class="finding-header">
+                    <span class="badge badge-high">HIGH</span>
+                    <span class="finding-id">OAG-005</span>
+                    <h3 class="finding-title">Unbounded Agent-to-Agent Recursion &amp; Graph Cycles</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\agent.py:55</span>
+                    <span><strong>OWASP:</strong> LLM10:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 1: Assess &amp; Bound Risk Upfront</span>
+                </div>
+                <p class="finding-msg">CrewAI Agent &#x27;Financial Planner&#x27; configured without &#x27;max_iter&#x27; circuit breaker.</p>
+                <div class="code-box"><pre><code># OAG-010: Tools with EXECUTE/ADMIN privilege have no human_input=True gate
+unbounded_crew_agent = Agent(
+    role=&quot;Financial Planner&quot;,</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Enforce strict execution bounds: configure &#x27;recursion_limit&#x27; on LangGraph compiles/invocations, set &#x27;max_iter&#x27; on CrewAI agents, and configure maximum retry timeouts on multi-agent handoffs.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-high" data-severity="HIGH">
+                <div class="finding-header">
+                    <span class="badge badge-high">HIGH</span>
+                    <span class="finding-id">OAG-008</span>
+                    <h3 class="finding-title">Unaudited State-Modifying Tool Actions</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\mcp_servers.json:1</span>
+                    <span><strong>OWASP:</strong> LLM06:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 2: Make Humans Meaningfully Accountable</span>
+                </div>
+                <p class="finding-msg">Mutating tool &#x27;mcp::shell-executor&#x27; (EXECUTE) executes state changes without mandatory audit logging or execution callbacks.</p>
+                <div class="code-box"><pre><code>def mcp::shell-executor(...)</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Attach structured audit loggers or framework callbacks (e.g. LangChain CallbackHandler, OpenTelemetry) to record tool invocation timestamp, actor identity, input arguments, and action rationale.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-high" data-severity="HIGH">
+                <div class="finding-header">
+                    <span class="badge badge-high">HIGH</span>
+                    <span class="finding-id">OAG-008</span>
+                    <h3 class="finding-title">Unaudited State-Modifying Tool Actions</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\tools.py:13</span>
+                    <span><strong>OWASP:</strong> LLM06:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 2: Make Humans Meaningfully Accountable</span>
+                </div>
+                <p class="finding-msg">Mutating tool &#x27;execute_system_command&#x27; (EXECUTE) executes state changes without mandatory audit logging or execution callbacks.</p>
+                <div class="code-box"><pre><code>
+@tool
+def execute_system_command(command: str) -&gt; str:
+    &quot;&quot;&quot;Execute raw shell commands on the host operating system.&quot;&quot;&quot;
+    # OAG-001: Shell over-permissioning</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Attach structured audit loggers or framework callbacks (e.g. LangChain CallbackHandler, OpenTelemetry) to record tool invocation timestamp, actor identity, input arguments, and action rationale.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-high" data-severity="HIGH">
+                <div class="finding-header">
+                    <span class="badge badge-high">HIGH</span>
+                    <span class="finding-id">OAG-008</span>
+                    <h3 class="finding-title">Unaudited State-Modifying Tool Actions</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\tools.py:21</span>
+                    <span><strong>OWASP:</strong> LLM06:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 2: Make Humans Meaningfully Accountable</span>
+                </div>
+                <p class="finding-msg">Mutating tool &#x27;wipe_database&#x27; (EXECUTE) executes state changes without mandatory audit logging or execution callbacks.</p>
+                <div class="code-box"><pre><code>
+@tool
+def wipe_database(table_name: str) -&gt; str:
+    &quot;&quot;&quot;Drop or wipe a table in the database.&quot;&quot;&quot;
+    # OAG-001: Destructive SQL &amp; OAG-008: Unaudited mutation</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Attach structured audit loggers or framework callbacks (e.g. LangChain CallbackHandler, OpenTelemetry) to record tool invocation timestamp, actor identity, input arguments, and action rationale.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-high" data-severity="HIGH">
+                <div class="finding-header">
+                    <span class="badge badge-high">HIGH</span>
+                    <span class="finding-id">OAG-008</span>
+                    <h3 class="finding-title">Unaudited State-Modifying Tool Actions</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\tools.py:32</span>
+                    <span><strong>OWASP:</strong> LLM06:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 2: Make Humans Meaningfully Accountable</span>
+                </div>
+                <p class="finding-msg">Mutating tool &#x27;update_user_balance&#x27; (WRITE) executes state changes without mandatory audit logging or execution callbacks.</p>
+                <div class="code-box"><pre><code>
+@tool
+def update_user_balance(user_id: str, amount: float) -&gt; str:
+    &quot;&quot;&quot;Mutate user financial balance in database without any audit logging.&quot;&quot;&quot;
+    # OAG-008: State modifying action without audit logs</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Attach structured audit loggers or framework callbacks (e.g. LangChain CallbackHandler, OpenTelemetry) to record tool invocation timestamp, actor identity, input arguments, and action rationale.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-high" data-severity="HIGH">
+                <div class="finding-header">
+                    <span class="badge badge-high">HIGH</span>
+                    <span class="finding-id">OAG-009</span>
+                    <h3 class="finding-title">Insecure MCP Transport (HTTP without TLS / SSE without Auth)</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\mcp_servers.json:1</span>
+                    <span><strong>OWASP:</strong> LLM09:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 3: Implement Technical Controls</span>
+                </div>
+                <p class="finding-msg">MCP Server &#x27;plaintext-http-gateway&#x27; configured with plaintext HTTP transport. All tool calls are transmitted without encryption.</p>
+                <div class="code-box"><pre><code>&quot;plaintext-http-gateway&quot;: {&quot;command&quot;: &quot;npx&quot;, &quot;args&quot;: [&#x27;mcp-http-client&#x27;, &#x27;--url&#x27;, &#x27;http://mcp.internal:8080/rpc&#x27;]}</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Replace all MCP transport URIs with HTTPS/WSS endpoints. For SSE-based transports, require bearer token authentication via Authorization headers or mTLS certificates.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-high" data-severity="HIGH">
+                <div class="finding-header">
+                    <span class="badge badge-high">HIGH</span>
+                    <span class="finding-id">OAG-009</span>
+                    <h3 class="finding-title">Insecure MCP Transport (HTTP without TLS / SSE without Auth)</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\mcp_servers.json:1</span>
+                    <span><strong>OWASP:</strong> LLM09:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 3: Implement Technical Controls</span>
+                </div>
+                <p class="finding-msg">MCP Server &#x27;unauthenticated-sse-feed&#x27; configured with plaintext HTTP transport. All tool calls are transmitted without encryption.</p>
+                <div class="code-box"><pre><code>&quot;unauthenticated-sse-feed&quot;: {&quot;command&quot;: &quot;npx&quot;, &quot;args&quot;: [&#x27;mcp-sse-connector&#x27;, &#x27;--endpoint&#x27;, &#x27;http://events.internal/sse&#x27;]}</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Replace all MCP transport URIs with HTTPS/WSS endpoints. For SSE-based transports, require bearer token authentication via Authorization headers or mTLS certificates.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-high" data-severity="HIGH">
+                <div class="finding-header">
+                    <span class="badge badge-high">HIGH</span>
+                    <span class="finding-id">OAG-010</span>
+                    <h3 class="finding-title">Missing Human-in-the-Loop for ADMIN/EXECUTE Privilege Tools</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\mcp_servers.json:1</span>
+                    <span><strong>OWASP:</strong> LLM06:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 2: Make Humans Meaningfully Accountable</span>
+                </div>
+                <p class="finding-msg">Tool &#x27;mcp::shell-executor&#x27; has EXECUTE privilege but no human approval gate (interrupt/confirm/human_input) was detected in the file.</p>
+                <div class="code-box"><pre><code>def mcp::shell-executor(...)</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Wrap ADMIN/EXECUTE tools with a human approval gate using LangGraph interrupt(), CrewAI human_input=True, or an explicit confirmation callback before executing irreversible operations.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-high" data-severity="HIGH">
+                <div class="finding-header">
+                    <span class="badge badge-high">HIGH</span>
+                    <span class="finding-id">OAG-010</span>
+                    <h3 class="finding-title">Missing Human-in-the-Loop for ADMIN/EXECUTE Privilege Tools</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\tools.py:13</span>
+                    <span><strong>OWASP:</strong> LLM06:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 2: Make Humans Meaningfully Accountable</span>
+                </div>
+                <p class="finding-msg">Tool &#x27;execute_system_command&#x27; has EXECUTE privilege but no human approval gate (interrupt/confirm/human_input) was detected in the file.</p>
+                <div class="code-box"><pre><code>
+@tool
+def execute_system_command(command: str) -&gt; str:
+    &quot;&quot;&quot;Execute raw shell commands on the host operating system.&quot;&quot;&quot;
+    # OAG-001: Shell over-permissioning</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Wrap ADMIN/EXECUTE tools with a human approval gate using LangGraph interrupt(), CrewAI human_input=True, or an explicit confirmation callback before executing irreversible operations.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-high" data-severity="HIGH">
+                <div class="finding-header">
+                    <span class="badge badge-high">HIGH</span>
+                    <span class="finding-id">OAG-010</span>
+                    <h3 class="finding-title">Missing Human-in-the-Loop for ADMIN/EXECUTE Privilege Tools</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\tools.py:21</span>
+                    <span><strong>OWASP:</strong> LLM06:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 2: Make Humans Meaningfully Accountable</span>
+                </div>
+                <p class="finding-msg">Tool &#x27;wipe_database&#x27; has EXECUTE privilege but no human approval gate (interrupt/confirm/human_input) was detected in the file.</p>
+                <div class="code-box"><pre><code>
+@tool
+def wipe_database(table_name: str) -&gt; str:
+    &quot;&quot;&quot;Drop or wipe a table in the database.&quot;&quot;&quot;
+    # OAG-001: Destructive SQL &amp; OAG-008: Unaudited mutation</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Wrap ADMIN/EXECUTE tools with a human approval gate using LangGraph interrupt(), CrewAI human_input=True, or an explicit confirmation callback before executing irreversible operations.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-medium" data-severity="MEDIUM">
+                <div class="finding-header">
+                    <span class="badge badge-medium">MEDIUM</span>
+                    <span class="finding-id">OAG-006</span>
+                    <h3 class="finding-title">Orphaned &amp; Undocumented Tools or MCP Servers</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\tools.py:43</span>
+                    <span><strong>OWASP:</strong> LLM06:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 2: Make Humans Meaningfully Accountable</span>
+                </div>
+                <p class="finding-msg">Tool &#x27;orphaned_legacy_tool&#x27; is declared/imported but never bound to any agent or workflow.</p>
+                <div class="code-box"><pre><code>
+@tool
+def orphaned_legacy_tool(query: str) -&gt; str:
+    &quot;&quot;&quot;A tool declared during early prototyping that is never bound or used.&quot;&quot;&quot;
+    # OAG-006: Orphaned tool</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Prune dormant tools from agent configuration manifests and remove unused tool code to maintain a minimal, reviewed operational attack surface.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-medium" data-severity="MEDIUM">
+                <div class="finding-header">
+                    <span class="badge badge-medium">MEDIUM</span>
+                    <span class="finding-id">OAG-007</span>
+                    <h3 class="finding-title">Missing Rate-Limits &amp; Autonomous Step Budgets</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\agent.py:41</span>
+                    <span><strong>OWASP:</strong> LLM10:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 3: Implement Technical Controls</span>
+                </div>
+                <p class="finding-msg">Agent &#x27;agent&#x27; lacks an explicit execution step budget or rate-limiting constraint.</p>
+                <div class="code-box"><pre><code>Agent(name=&#x27;agent&#x27;, framework=&#x27;langgraph&#x27;)</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Configure step caps (e.g., max_iterations=10), implement token budget governors, and attach exponential backoff or rate-limiting decorators to tool dispatchers.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-medium" data-severity="MEDIUM">
+                <div class="finding-header">
+                    <span class="badge badge-medium">MEDIUM</span>
+                    <span class="finding-id">OAG-007</span>
+                    <h3 class="finding-title">Missing Rate-Limits &amp; Autonomous Step Budgets</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\agent.py:42</span>
+                    <span><strong>OWASP:</strong> LLM10:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 3: Implement Technical Controls</span>
+                </div>
+                <p class="finding-msg">Agent &#x27;tools&#x27; lacks an explicit execution step budget or rate-limiting constraint.</p>
+                <div class="code-box"><pre><code>Agent(name=&#x27;tools&#x27;, framework=&#x27;langgraph&#x27;)</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Configure step caps (e.g., max_iterations=10), implement token budget governors, and attach exponential backoff or rate-limiting decorators to tool dispatchers.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-medium" data-severity="MEDIUM">
+                <div class="finding-header">
+                    <span class="badge badge-medium">MEDIUM</span>
+                    <span class="finding-id">OAG-007</span>
+                    <h3 class="finding-title">Missing Rate-Limits &amp; Autonomous Step Budgets</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\agent.py:55</span>
+                    <span><strong>OWASP:</strong> LLM10:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 3: Implement Technical Controls</span>
+                </div>
+                <p class="finding-msg">Agent &#x27;Financial Planner&#x27; lacks an explicit execution step budget or rate-limiting constraint.</p>
+                <div class="code-box"><pre><code>Agent(name=&#x27;Financial Planner&#x27;, framework=&#x27;crewai&#x27;)</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Configure step caps (e.g., max_iterations=10), implement token budget governors, and attach exponential backoff or rate-limiting decorators to tool dispatchers.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-medium" data-severity="MEDIUM">
+                <div class="finding-header">
+                    <span class="badge badge-medium">MEDIUM</span>
+                    <span class="finding-id">OAG-011</span>
+                    <h3 class="finding-title">Excessive Tool Chaining (Chain Depth &gt;5)</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\agent.py:55</span>
+                    <span><strong>OWASP:</strong> LLM06:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 1: Assess and Bound Risk Upfront</span>
+                </div>
+                <p class="finding-msg">Agent &#x27;Financial Planner&#x27; is bound to 9 tools, exceeding the maximum safe chain depth of 5. Bound tools: execute_system_command, wipe_database, update_user_balance, exfiltrate_customer_data, fetch_market_data, run_risk_model, send_trade_order, notify_compliance, archive_audit_log.</p>
+                <div class="code-box"><pre><code>Agent(role=&#x27;Financial Planner&#x27;, tools=[execute_system_command, wipe_database, update_user_balance, exfiltrate_customer_data, fetch_market_data, run_risk_model, send_trade_order, notify_compliance, archive_audit_log])</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Limit the number of tools bound to any single agent to ≤5. For complex workflows, decompose into specialized sub-agents with narrow tool scopes and explicit handoff contracts.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-low" data-severity="LOW">
+                <div class="finding-header">
+                    <span class="badge badge-low">LOW</span>
+                    <span class="finding-id">OAG-006</span>
+                    <h3 class="finding-title">Orphaned &amp; Undocumented Tools or MCP Servers</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\mcp_servers.json:1</span>
+                    <span><strong>OWASP:</strong> LLM06:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 2: Make Humans Meaningfully Accountable</span>
+                </div>
+                <p class="finding-msg">MCP Server &#x27;shell-executor&#x27; is registered in manifest but not referenced by agent code.</p>
+                <div class="code-box"><pre><code>&quot;shell-executor&quot;: { &quot;command&quot;: &quot;bash&quot; }</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Remove obsolete MCP servers from config manifests.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-low" data-severity="LOW">
+                <div class="finding-header">
+                    <span class="badge badge-low">LOW</span>
+                    <span class="finding-id">OAG-006</span>
+                    <h3 class="finding-title">Orphaned &amp; Undocumented Tools or MCP Servers</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\mcp_servers.json:1</span>
+                    <span><strong>OWASP:</strong> LLM06:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 2: Make Humans Meaningfully Accountable</span>
+                </div>
+                <p class="finding-msg">MCP Server &#x27;database-gateway&#x27; is registered in manifest but not referenced by agent code.</p>
+                <div class="code-box"><pre><code>&quot;database-gateway&quot;: { &quot;command&quot;: &quot;uvx&quot; }</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Remove obsolete MCP servers from config manifests.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-low" data-severity="LOW">
+                <div class="finding-header">
+                    <span class="badge badge-low">LOW</span>
+                    <span class="finding-id">OAG-006</span>
+                    <h3 class="finding-title">Orphaned &amp; Undocumented Tools or MCP Servers</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\mcp_servers.json:1</span>
+                    <span><strong>OWASP:</strong> LLM06:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 2: Make Humans Meaningfully Accountable</span>
+                </div>
+                <p class="finding-msg">MCP Server &#x27;orphaned-debug-mcp&#x27; is registered in manifest but not referenced by agent code.</p>
+                <div class="code-box"><pre><code>&quot;orphaned-debug-mcp&quot;: { &quot;command&quot;: &quot;node&quot; }</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Remove obsolete MCP servers from config manifests.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-low" data-severity="LOW">
+                <div class="finding-header">
+                    <span class="badge badge-low">LOW</span>
+                    <span class="finding-id">OAG-006</span>
+                    <h3 class="finding-title">Orphaned &amp; Undocumented Tools or MCP Servers</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\mcp_servers.json:1</span>
+                    <span><strong>OWASP:</strong> LLM06:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 2: Make Humans Meaningfully Accountable</span>
+                </div>
+                <p class="finding-msg">MCP Server &#x27;plaintext-http-gateway&#x27; is registered in manifest but not referenced by agent code.</p>
+                <div class="code-box"><pre><code>&quot;plaintext-http-gateway&quot;: { &quot;command&quot;: &quot;npx&quot; }</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Remove obsolete MCP servers from config manifests.</span>
+                </div>
+            </div>
+            
+            <div class="finding-card finding-low" data-severity="LOW">
+                <div class="finding-header">
+                    <span class="badge badge-low">LOW</span>
+                    <span class="finding-id">OAG-006</span>
+                    <h3 class="finding-title">Orphaned &amp; Undocumented Tools or MCP Servers</h3>
+                </div>
+                <div class="finding-meta">
+                    <span><strong>Location:</strong> C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\mcp_servers.json:1</span>
+                    <span><strong>OWASP:</strong> LLM06:2025</span>
+                    <span><strong>IMDA:</strong> Pillar 2: Make Humans Meaningfully Accountable</span>
+                </div>
+                <p class="finding-msg">MCP Server &#x27;unauthenticated-sse-feed&#x27; is registered in manifest but not referenced by agent code.</p>
+                <div class="code-box"><pre><code>&quot;unauthenticated-sse-feed&quot;: { &quot;command&quot;: &quot;npx&quot; }</code></pre></div>
+                <div class="remediation-box">
+                    <span class="rem-label">Remediation:</span>
+                    <span>Remove obsolete MCP servers from config manifests.</span>
+                </div>
+            </div>
+            
+        </div>
+
+        <div id="tab-aibom" class="tab-content">
+            <h2 style="margin-bottom: 12px; color: var(--text-heading);">Declared Tools & Capability Permissions</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tool Name</th>
+                        <th>Privilege Tier</th>
+                        <th>Framework</th>
+                        <th>Audited</th>
+                        <th>Bound</th>
+                        <th>Identified Sinks</th>
+                        <th>Source Location</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                <tr>
+                    <td><code>mcp::shell-executor</code></td>
+                    <td><span class="badge badge-execute">EXECUTE</span></td>
+                    <td>mcp</td>
+                    <td><span class="status-no">No</span></td>
+                    <td><span class="status-no">No</span></td>
+                    <td><small>MCPShellCommand: bash</small></td>
+                    <td><small>C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\mcp_servers.json:1</small></td>
+                </tr>
+                
+                <tr>
+                    <td><code>execute_system_command</code></td>
+                    <td><span class="badge badge-execute">EXECUTE</span></td>
+                    <td>langchain</td>
+                    <td><span class="status-no">No</span></td>
+                    <td><span class="status-yes">Yes</span></td>
+                    <td><small>ShellExecution: subprocess.run</small></td>
+                    <td><small>C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\tools.py:13</small></td>
+                </tr>
+                
+                <tr>
+                    <td><code>wipe_database</code></td>
+                    <td><span class="badge badge-execute">EXECUTE</span></td>
+                    <td>langchain</td>
+                    <td><span class="status-no">No</span></td>
+                    <td><span class="status-yes">Yes</span></td>
+                    <td><small>ShellExecution: cursor.execute</small></td>
+                    <td><small>C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\tools.py:21</small></td>
+                </tr>
+                
+                <tr>
+                    <td><code>update_user_balance</code></td>
+                    <td><span class="badge badge-write">WRITE</span></td>
+                    <td>langchain</td>
+                    <td><span class="status-no">No</span></td>
+                    <td><span class="status-yes">Yes</span></td>
+                    <td><small>ShellExecution: cursor.execute, MutatingSQL: UPDATE ACCOUNTS SET BALANCE = BALANCE + </small></td>
+                    <td><small>C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\tools.py:32</small></td>
+                </tr>
+                
+                <tr>
+                    <td><code>mcp::database-gateway</code></td>
+                    <td><span class="badge badge-read">READ</span></td>
+                    <td>mcp</td>
+                    <td><span class="status-no">No</span></td>
+                    <td><span class="status-no">No</span></td>
+                    <td><small>None</small></td>
+                    <td><small>C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\mcp_servers.json:1</small></td>
+                </tr>
+                
+                <tr>
+                    <td><code>mcp::orphaned-debug-mcp</code></td>
+                    <td><span class="badge badge-read">READ</span></td>
+                    <td>mcp</td>
+                    <td><span class="status-no">No</span></td>
+                    <td><span class="status-no">No</span></td>
+                    <td><small>None</small></td>
+                    <td><small>C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\mcp_servers.json:1</small></td>
+                </tr>
+                
+                <tr>
+                    <td><code>mcp::plaintext-http-gateway</code></td>
+                    <td><span class="badge badge-read">READ</span></td>
+                    <td>mcp</td>
+                    <td><span class="status-no">No</span></td>
+                    <td><span class="status-no">No</span></td>
+                    <td><small>None</small></td>
+                    <td><small>C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\mcp_servers.json:1</small></td>
+                </tr>
+                
+                <tr>
+                    <td><code>mcp::unauthenticated-sse-feed</code></td>
+                    <td><span class="badge badge-read">READ</span></td>
+                    <td>mcp</td>
+                    <td><span class="status-no">No</span></td>
+                    <td><span class="status-no">No</span></td>
+                    <td><small>None</small></td>
+                    <td><small>C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\mcp_servers.json:1</small></td>
+                </tr>
+                
+                <tr>
+                    <td><code>orphaned_legacy_tool</code></td>
+                    <td><span class="badge badge-read">READ</span></td>
+                    <td>langchain</td>
+                    <td><span class="status-no">No</span></td>
+                    <td><span class="status-no">No</span></td>
+                    <td><small>None</small></td>
+                    <td><small>C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\tools.py:43</small></td>
+                </tr>
+                
+                <tr>
+                    <td><code>exfiltrate_customer_data</code></td>
+                    <td><span class="badge badge-read">READ</span></td>
+                    <td>langchain</td>
+                    <td><span class="status-no">No</span></td>
+                    <td><span class="status-yes">Yes</span></td>
+                    <td><small>None</small></td>
+                    <td><small>C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\tools.py:51</small></td>
+                </tr>
+                
+                <tr>
+                    <td><code>fetch_market_data</code></td>
+                    <td><span class="badge badge-read">READ</span></td>
+                    <td>langchain</td>
+                    <td><span class="status-no">No</span></td>
+                    <td><span class="status-yes">Yes</span></td>
+                    <td><small>None</small></td>
+                    <td><small>C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\tools.py:69</small></td>
+                </tr>
+                
+                <tr>
+                    <td><code>run_risk_model</code></td>
+                    <td><span class="badge badge-read">READ</span></td>
+                    <td>langchain</td>
+                    <td><span class="status-no">No</span></td>
+                    <td><span class="status-yes">Yes</span></td>
+                    <td><small>None</small></td>
+                    <td><small>C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\tools.py:75</small></td>
+                </tr>
+                
+                <tr>
+                    <td><code>send_trade_order</code></td>
+                    <td><span class="badge badge-read">READ</span></td>
+                    <td>langchain</td>
+                    <td><span class="status-no">No</span></td>
+                    <td><span class="status-yes">Yes</span></td>
+                    <td><small>None</small></td>
+                    <td><small>C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\tools.py:81</small></td>
+                </tr>
+                
+                <tr>
+                    <td><code>notify_compliance</code></td>
+                    <td><span class="badge badge-read">READ</span></td>
+                    <td>langchain</td>
+                    <td><span class="status-no">No</span></td>
+                    <td><span class="status-yes">Yes</span></td>
+                    <td><small>None</small></td>
+                    <td><small>C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\tools.py:89</small></td>
+                </tr>
+                
+                <tr>
+                    <td><code>archive_audit_log</code></td>
+                    <td><span class="badge badge-read">READ</span></td>
+                    <td>langchain</td>
+                    <td><span class="status-no">No</span></td>
+                    <td><span class="status-yes">Yes</span></td>
+                    <td><small>None</small></td>
+                    <td><small>C:\Users\3xs\Documents\orvyen\tests\fixtures\vulnerable_agent\tools.py:95</small></td>
+                </tr>
+                
+                </tbody>
+            </table>
+        </div>
+
+        <div id="tab-compliance" class="tab-content">
+            <h2 style="margin-bottom: 12px; color: var(--text-heading);">Singapore IMDA Framework for Agentic AI (May 2026)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Pillar</th>
+                        <th>Focus Name</th>
+                        <th>Status</th>
+                        <th>Violations</th>
+                        <th>Guideline Scope</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+            <tr>
+                <td><strong>Pillar 1</strong></td>
+                <td>Assess and Bound Risk Upfront</td>
+                <td><span class="badge badge-fail">NON-COMPLIANT</span></td>
+                <td>5</td>
+                <td><small>Establish operational boundaries, maximum recursion limits, and failure fallback modes.</small></td>
+            </tr>
+            
+            <tr>
+                <td><strong>Pillar 2</strong></td>
+                <td>Make Humans Meaningfully Accountable</td>
+                <td><span class="badge badge-fail">NON-COMPLIANT</span></td>
+                <td>13</td>
+                <td><small>Ensure clear tool ownership, avoid orphaned components, and record comprehensive audit logs.</small></td>
+            </tr>
+            
+            <tr>
+                <td><strong>Pillar 3</strong></td>
+                <td>Implement Technical Controls</td>
+                <td><span class="badge badge-fail">NON-COMPLIANT</span></td>
+                <td>15</td>
+                <td><small>Enforce principle of least privilege on tools, secure secret storage, PII redaction, and rate limiting.</small></td>
+            </tr>
+            
+            <tr>
+                <td><strong>Pillar 4</strong></td>
+                <td>Enable End-User Responsibility</td>
+                <td><span class="badge badge-pass">COMPLIANT</span></td>
+                <td>0</td>
+                <td><small>Provide transparent capability disclosures, structured AIBOM manifests, and verifiable trails.</small></td>
+            </tr>
+            
+                </tbody>
+            </table>
+
+            <h2 style="margin-top: 32px; margin-bottom: 12px; color: var(--text-heading);">OWASP Top 10 for LLM Applications</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>OWASP ID</th>
+                        <th>Vulnerability Class</th>
+                        <th>Status</th>
+                        <th>Violations</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+            <tr>
+                <td><strong>LLM01</strong></td>
+                <td>Prompt Injection</td>
+                <td><span class="badge badge-fail">FAIL</span></td>
+                <td>1</td>
+                <td><small>Manipulating LLM behavior through crafted inputs in prompts.</small></td>
+            </tr>
+            
+            <tr>
+                <td><strong>LLM02</strong></td>
+                <td>Sensitive Information Disclosure</td>
+                <td><span class="badge badge-fail">FAIL</span></td>
+                <td>6</td>
+                <td><small>Exposing confidential data, hardcoded secrets, or PII via outputs/logs.</small></td>
+            </tr>
+            
+            <tr>
+                <td><strong>LLM06</strong></td>
+                <td>Excessive Agency</td>
+                <td><span class="badge badge-fail">FAIL</span></td>
+                <td>18</td>
+                <td><small>Granting agents over-permissioned tools, unbounded execution, or unaudited actions.</small></td>
+            </tr>
+            
+            <tr>
+                <td><strong>LLM09</strong></td>
+                <td>Misinformation / Insecure Plugin Design</td>
+                <td><span class="badge badge-fail">FAIL</span></td>
+                <td>2</td>
+                <td><small>Insecure MCP/plugin transport exposing tool calls to interception.</small></td>
+            </tr>
+            
+            <tr>
+                <td><strong>LLM10</strong></td>
+                <td>Unbounded Consumption</td>
+                <td><span class="badge badge-fail">FAIL</span></td>
+                <td>6</td>
+                <td><small>Resource exhaustion and financial loss from unconstrained loops and missing budgets.</small></td>
+            </tr>
+            
+                </tbody>
+            </table>
+        </div>
+
+        <footer>
+            Generated by <strong>Orvyen Agentic</strong> &bull; Algorzen Pte. Ltd. &bull; Sub-100ms Pre-Deployment Agent Security
+        </footer>
+    </div>
+
+    <script>
+        function showTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+        }
+    </script>
+</body>
+</html>

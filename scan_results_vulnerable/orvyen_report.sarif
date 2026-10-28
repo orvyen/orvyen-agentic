@@ -1,0 +1,1397 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "Orvyen Agentic",
+          "version": "0.3.0",
+          "semanticVersion": "0.3.0",
+          "informationUri": "https://github.com/algorzen/orvyen-agentic",
+          "rules": [
+            {
+              "id": "OAG-001",
+              "name": "ToolOver-Permissioning&DangerousExecutionScope",
+              "shortDescription": {
+                "text": "Tool Over-Permissioning & Dangerous Execution Scope"
+              },
+              "fullDescription": {
+                "text": "Identifies agent tools granted dangerous system access (arbitrary shell execution, unbounded filesystem deletion, or unrestricted database modification) without sandboxing."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "help": {
+                "text": "Constrain tool privileges to the exact minimum necessary. Replace raw shell or database execution tools with parameterized, read-only or strictly whitelisted operational handlers.",
+                "markdown": "**Remediation:** Constrain tool privileges to the exact minimum necessary. Replace raw shell or database execution tools with parameterized, read-only or strictly whitelisted operational handlers.\n\n- **OWASP LLM:** LLM06:2025\n- **IMDA Pillar:** Pillar 3: Implement Technical Controls"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "error",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM06:2025",
+                  "Pillar 3: Implement Technical Controls"
+                ],
+                "owasp_id": "LLM06:2025",
+                "imda_pillar": "Pillar 3: Implement Technical Controls"
+              }
+            },
+            {
+              "id": "OAG-002",
+              "name": "PromptInjectionSurfaceinSystemInstructions",
+              "shortDescription": {
+                "text": "Prompt Injection Surface in System Instructions"
+              },
+              "fullDescription": {
+                "text": "Detects raw string formatting, f-strings, or string concatenation interpolating dynamic variables directly into agent system prompts, allowing prompt injection and goal hijacking."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "help": {
+                "text": "Separate system instructions from dynamic inputs. Use parameterized prompt templates, isolate untrusted content within separate User/Tool messages, or pass data as structured payloads.",
+                "markdown": "**Remediation:** Separate system instructions from dynamic inputs. Use parameterized prompt templates, isolate untrusted content within separate User/Tool messages, or pass data as structured payloads.\n\n- **OWASP LLM:** LLM01:2025\n- **IMDA Pillar:** Pillar 1: Assess & Bound Risk Upfront"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "error",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM01:2025",
+                  "Pillar 1: Assess & Bound Risk Upfront"
+                ],
+                "owasp_id": "LLM01:2025",
+                "imda_pillar": "Pillar 1: Assess & Bound Risk Upfront"
+              }
+            },
+            {
+              "id": "OAG-003",
+              "name": "HardcodedCredentials&APIKeysinConfiguration",
+              "shortDescription": {
+                "text": "Hardcoded Credentials & API Keys in Configuration"
+              },
+              "fullDescription": {
+                "text": "Identifies API keys, authentication tokens, or private credentials stored directly in agent source code, environment manifests, or MCP server configuration files."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "help": {
+                "text": "Remove plain-text credentials immediately. Load all keys dynamically from environment variables or an enterprise secrets manager (e.g., AWS Secrets Manager, HashiCorp Vault).",
+                "markdown": "**Remediation:** Remove plain-text credentials immediately. Load all keys dynamically from environment variables or an enterprise secrets manager (e.g., AWS Secrets Manager, HashiCorp Vault).\n\n- **OWASP LLM:** LLM02:2025\n- **IMDA Pillar:** Pillar 3: Implement Technical Controls"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "error",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM02:2025",
+                  "Pillar 3: Implement Technical Controls"
+                ],
+                "owasp_id": "LLM02:2025",
+                "imda_pillar": "Pillar 3: Implement Technical Controls"
+              }
+            },
+            {
+              "id": "OAG-004",
+              "name": "UnfilteredPIIRoutingtoTools&PromptSinks",
+              "shortDescription": {
+                "text": "Unfiltered PII Routing to Tools & Prompt Sinks"
+              },
+              "fullDescription": {
+                "text": "Identifies customer PII (e.g. emails, phone numbers, identification numbers, credit cards) flowing into external tool calls or remote LLM completions without an intermediate redaction step."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "help": {
+                "text": "Implement an automated PII anonymizer/redaction node (e.g. Microsoft Presidio, regex scrubber) prior to dispatching data to external models or third-party tool APIs.",
+                "markdown": "**Remediation:** Implement an automated PII anonymizer/redaction node (e.g. Microsoft Presidio, regex scrubber) prior to dispatching data to external models or third-party tool APIs.\n\n- **OWASP LLM:** LLM02:2025\n- **IMDA Pillar:** Pillar 3: Implement Technical Controls"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "error",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM02:2025",
+                  "Pillar 3: Implement Technical Controls"
+                ],
+                "owasp_id": "LLM02:2025",
+                "imda_pillar": "Pillar 3: Implement Technical Controls"
+              }
+            },
+            {
+              "id": "OAG-005",
+              "name": "UnboundedAgent-to-AgentRecursion&GraphCycles",
+              "shortDescription": {
+                "text": "Unbounded Agent-to-Agent Recursion & Graph Cycles"
+              },
+              "fullDescription": {
+                "text": "Detects multi-agent workflows containing cyclic transitions, recursive delegation, or agent feedback loops lacking explicit recursion depth caps or step limits."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "help": {
+                "text": "Enforce strict execution bounds: configure 'recursion_limit' on LangGraph compiles/invocations, set 'max_iter' on CrewAI agents, and configure maximum retry timeouts on multi-agent handoffs.",
+                "markdown": "**Remediation:** Enforce strict execution bounds: configure 'recursion_limit' on LangGraph compiles/invocations, set 'max_iter' on CrewAI agents, and configure maximum retry timeouts on multi-agent handoffs.\n\n- **OWASP LLM:** LLM10:2025\n- **IMDA Pillar:** Pillar 1: Assess & Bound Risk Upfront"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "error",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM10:2025",
+                  "Pillar 1: Assess & Bound Risk Upfront"
+                ],
+                "owasp_id": "LLM10:2025",
+                "imda_pillar": "Pillar 1: Assess & Bound Risk Upfront"
+              }
+            },
+            {
+              "id": "OAG-006",
+              "name": "Orphaned&UndocumentedToolsorMCPServers",
+              "shortDescription": {
+                "text": "Orphaned & Undocumented Tools or MCP Servers"
+              },
+              "fullDescription": {
+                "text": "Identifies tools declared, imported, or configured in MCP server manifests that are never bound to an agent executor, graph node, or task, leaving an unreviewed attack surface."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "help": {
+                "text": "Prune dormant tools from agent configuration manifests and remove unused tool code to maintain a minimal, reviewed operational attack surface.",
+                "markdown": "**Remediation:** Prune dormant tools from agent configuration manifests and remove unused tool code to maintain a minimal, reviewed operational attack surface.\n\n- **OWASP LLM:** LLM06:2025\n- **IMDA Pillar:** Pillar 2: Make Humans Meaningfully Accountable"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "warning",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM06:2025",
+                  "Pillar 2: Make Humans Meaningfully Accountable"
+                ],
+                "owasp_id": "LLM06:2025",
+                "imda_pillar": "Pillar 2: Make Humans Meaningfully Accountable"
+              }
+            },
+            {
+              "id": "OAG-007",
+              "name": "MissingRate-Limits&AutonomousStepBudgets",
+              "shortDescription": {
+                "text": "Missing Rate-Limits & Autonomous Step Budgets"
+              },
+              "fullDescription": {
+                "text": "Detects autonomous agent loops or multi-agent orchestrations lacking step budgets, token ceilings, or invocation rate-limiting controls, risking runaway API spend and resource exhaustion."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "help": {
+                "text": "Configure step caps (e.g., max_iterations=10), implement token budget governors, and attach exponential backoff or rate-limiting decorators to tool dispatchers.",
+                "markdown": "**Remediation:** Configure step caps (e.g., max_iterations=10), implement token budget governors, and attach exponential backoff or rate-limiting decorators to tool dispatchers.\n\n- **OWASP LLM:** LLM10:2025\n- **IMDA Pillar:** Pillar 3: Implement Technical Controls"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "warning",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM10:2025",
+                  "Pillar 3: Implement Technical Controls"
+                ],
+                "owasp_id": "LLM10:2025",
+                "imda_pillar": "Pillar 3: Implement Technical Controls"
+              }
+            },
+            {
+              "id": "OAG-008",
+              "name": "UnauditedState-ModifyingToolActions",
+              "shortDescription": {
+                "text": "Unaudited State-Modifying Tool Actions"
+              },
+              "fullDescription": {
+                "text": "Flags tools performing external state mutations (database updates, filesystem writes, or network API requests) without structured audit logging, execution tracing, or callback telemetry."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "help": {
+                "text": "Attach structured audit loggers or framework callbacks (e.g. LangChain CallbackHandler, OpenTelemetry) to record tool invocation timestamp, actor identity, input arguments, and action rationale.",
+                "markdown": "**Remediation:** Attach structured audit loggers or framework callbacks (e.g. LangChain CallbackHandler, OpenTelemetry) to record tool invocation timestamp, actor identity, input arguments, and action rationale.\n\n- **OWASP LLM:** LLM06:2025\n- **IMDA Pillar:** Pillar 2: Make Humans Meaningfully Accountable"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "error",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM06:2025",
+                  "Pillar 2: Make Humans Meaningfully Accountable"
+                ],
+                "owasp_id": "LLM06:2025",
+                "imda_pillar": "Pillar 2: Make Humans Meaningfully Accountable"
+              }
+            },
+            {
+              "id": "OAG-009",
+              "name": "InsecureMCPTransport(HTTPwithoutTLS/SSEwithoutAuth)",
+              "shortDescription": {
+                "text": "Insecure MCP Transport (HTTP without TLS / SSE without Auth)"
+              },
+              "fullDescription": {
+                "text": "Detects MCP server connections configured over plaintext HTTP or SSE endpoints without authentication tokens, exposing tool invocations and agent state to network-level interception and man-in-the-middle attacks."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "help": {
+                "text": "Replace all MCP transport URIs with HTTPS/WSS endpoints. For SSE-based transports, require bearer token authentication via Authorization headers or mTLS certificates.",
+                "markdown": "**Remediation:** Replace all MCP transport URIs with HTTPS/WSS endpoints. For SSE-based transports, require bearer token authentication via Authorization headers or mTLS certificates.\n\n- **OWASP LLM:** LLM09:2025\n- **IMDA Pillar:** Pillar 3: Implement Technical Controls"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "error",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM09:2025",
+                  "Pillar 3: Implement Technical Controls"
+                ],
+                "owasp_id": "LLM09:2025",
+                "imda_pillar": "Pillar 3: Implement Technical Controls"
+              }
+            },
+            {
+              "id": "OAG-010",
+              "name": "MissingHuman-in-the-LoopforADMIN/EXECUTEPrivilegeTools",
+              "shortDescription": {
+                "text": "Missing Human-in-the-Loop for ADMIN/EXECUTE Privilege Tools"
+              },
+              "fullDescription": {
+                "text": "Identifies tools with ADMIN or EXECUTE privilege tier that are not gated behind any human approval check, confirmation callback, or interrupt mechanism. Per IMDA Pillar 2 and OWASP LLM06, high-impact actions require explicit human oversight before execution."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "help": {
+                "text": "Wrap ADMIN/EXECUTE tools with a human approval gate using LangGraph interrupt(), CrewAI human_input=True, or an explicit confirmation callback before executing irreversible operations.",
+                "markdown": "**Remediation:** Wrap ADMIN/EXECUTE tools with a human approval gate using LangGraph interrupt(), CrewAI human_input=True, or an explicit confirmation callback before executing irreversible operations.\n\n- **OWASP LLM:** LLM06:2025\n- **IMDA Pillar:** Pillar 2: Make Humans Meaningfully Accountable"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "error",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM06:2025",
+                  "Pillar 2: Make Humans Meaningfully Accountable"
+                ],
+                "owasp_id": "LLM06:2025",
+                "imda_pillar": "Pillar 2: Make Humans Meaningfully Accountable"
+              }
+            },
+            {
+              "id": "OAG-011",
+              "name": "ExcessiveToolChaining(ChainDepth>5)",
+              "shortDescription": {
+                "text": "Excessive Tool Chaining (Chain Depth >5)"
+              },
+              "fullDescription": {
+                "text": "Identifies agent configurations that allow sequential tool invocations exceeding 5 hops in a single reasoning cycle. Deep tool chains amplify prompt injection blast radius and make audit trails intractable. Each hop multiplies the agent's potential side-effect surface."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "help": {
+                "text": "Limit the number of tools bound to any single agent to \u22645. For complex workflows, decompose into specialized sub-agents with narrow tool scopes and explicit handoff contracts.",
+                "markdown": "**Remediation:** Limit the number of tools bound to any single agent to \u22645. For complex workflows, decompose into specialized sub-agents with narrow tool scopes and explicit handoff contracts.\n\n- **OWASP LLM:** LLM06:2025\n- **IMDA Pillar:** Pillar 1: Assess and Bound Risk Upfront"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "warning",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM06:2025",
+                  "Pillar 1: Assess and Bound Risk Upfront"
+                ],
+                "owasp_id": "LLM06:2025",
+                "imda_pillar": "Pillar 1: Assess and Bound Risk Upfront"
+              }
+            },
+            {
+              "id": "OAG-012",
+              "name": "SensitiveDataExfiltrationviaExternalNetworkSink",
+              "shortDescription": {
+                "text": "Sensitive Data Exfiltration via External Network Sink"
+              },
+              "fullDescription": {
+                "text": "Identifies tools that accept PII-named parameters (email, SSN, credit_card, etc.) and contain external network mutation sinks (HTTP POST/PUT, webhook, SMTP) without evidence of redaction or anonymization. This creates a direct PII exfiltration path controllable by agent reasoning."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "help": {
+                "text": "Apply PII redaction/tokenization before any external network call. Remove PII parameters from tool signatures entirely; pass opaque references (user_id) instead. Add data loss prevention (DLP) middleware at the agent output boundary.",
+                "markdown": "**Remediation:** Apply PII redaction/tokenization before any external network call. Remove PII parameters from tool signatures entirely; pass opaque references (user_id) instead. Add data loss prevention (DLP) middleware at the agent output boundary.\n\n- **OWASP LLM:** LLM02:2025\n- **IMDA Pillar:** Pillar 3: Implement Technical Controls"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "error",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM02:2025",
+                  "Pillar 3: Implement Technical Controls"
+                ],
+                "owasp_id": "LLM02:2025",
+                "imda_pillar": "Pillar 3: Implement Technical Controls"
+              }
+            }
+          ]
+        }
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true,
+          "endTimeUtc": "2026-10-28T10:52:09.913952+00:00"
+        }
+      ],
+      "results": [
+        {
+          "ruleId": "OAG-001",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Tool 'mcp::shell-executor' possesses excessive privilege (EXECUTE). Detected capabilities: MCPShellCommand: bash."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/mcp_servers.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "def mcp::shell-executor(...)"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "CRITICAL",
+            "owasp_id": "LLM06:2025",
+            "imda_pillar": "Pillar 3: Implement Technical Controls",
+            "remediation": "Constrain tool privileges to the exact minimum necessary. Replace raw shell or database execution tools with parameterized, read-only or strictly whitelisted operational handlers."
+          }
+        },
+        {
+          "ruleId": "OAG-001",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Tool 'execute_system_command' possesses excessive privilege (EXECUTE). Detected capabilities: ShellExecution: subprocess.run."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/tools.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 13,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "\n@tool\ndef execute_system_command(command: str) -> str:\n    \"\"\"Execute raw shell commands on the host operating system.\"\"\"\n    # OAG-001: Shell over-permissioning"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "CRITICAL",
+            "owasp_id": "LLM06:2025",
+            "imda_pillar": "Pillar 3: Implement Technical Controls",
+            "remediation": "Constrain tool privileges to the exact minimum necessary. Replace raw shell or database execution tools with parameterized, read-only or strictly whitelisted operational handlers."
+          }
+        },
+        {
+          "ruleId": "OAG-001",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Tool 'wipe_database' possesses excessive privilege (EXECUTE). Detected capabilities: ShellExecution: cursor.execute."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/tools.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 21,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "\n@tool\ndef wipe_database(table_name: str) -> str:\n    \"\"\"Drop or wipe a table in the database.\"\"\"\n    # OAG-001: Destructive SQL & OAG-008: Unaudited mutation"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "CRITICAL",
+            "owasp_id": "LLM06:2025",
+            "imda_pillar": "Pillar 3: Implement Technical Controls",
+            "remediation": "Constrain tool privileges to the exact minimum necessary. Replace raw shell or database execution tools with parameterized, read-only or strictly whitelisted operational handlers."
+          }
+        },
+        {
+          "ruleId": "OAG-001",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "MCP Server 'shell-executor' grants unbounded shell interpreter access ('bash')."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/mcp_servers.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "\"shell-executor\": { \"command\": \"bash\", \"args\": ['-c'] }"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "CRITICAL",
+            "owasp_id": "LLM06:2025",
+            "imda_pillar": "Pillar 3: Implement Technical Controls",
+            "remediation": "Remove raw shell MCP servers or replace with narrowly scoped command microservices."
+          }
+        },
+        {
+          "ruleId": "OAG-003",
+          "ruleIndex": 2,
+          "level": "error",
+          "message": {
+            "text": "Hardcoded credential detected (OpenAI / Generic Secret Key) in configuration."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/mcp_servers.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 12,
+                  "startColumn": 28,
+                  "snippet": {
+                    "text": "        \"OPENAI_API_KEY\": \"sk-p**************************************11\","
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "CRITICAL",
+            "owasp_id": "LLM02:2025",
+            "imda_pillar": "Pillar 3: Implement Technical Controls",
+            "remediation": "Remove plain-text credentials immediately. Load all keys dynamically from environment variables or an enterprise secrets manager (e.g., AWS Secrets Manager, HashiCorp Vault)."
+          }
+        },
+        {
+          "ruleId": "OAG-003",
+          "ruleIndex": 2,
+          "level": "error",
+          "message": {
+            "text": "MCP server 'database-gateway' embeds plaintext credential 'OPENAI_API_KEY'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/mcp_servers.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "\"OPENAI_API_KEY\": \"sk-***************************************11\""
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "CRITICAL",
+            "owasp_id": "LLM02:2025",
+            "imda_pillar": "Pillar 3: Implement Technical Controls",
+            "remediation": "Remove plain-text credentials immediately. Load all keys dynamically from environment variables or an enterprise secrets manager (e.g., AWS Secrets Manager, HashiCorp Vault)."
+          }
+        },
+        {
+          "ruleId": "OAG-003",
+          "ruleIndex": 2,
+          "level": "error",
+          "message": {
+            "text": "MCP server 'database-gateway' embeds plaintext credential 'DATABASE_PASSWORD'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/mcp_servers.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "\"DATABASE_PASSWORD\": \"Pro***********************3!\""
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "CRITICAL",
+            "owasp_id": "LLM02:2025",
+            "imda_pillar": "Pillar 3: Implement Technical Controls",
+            "remediation": "Remove plain-text credentials immediately. Load all keys dynamically from environment variables or an enterprise secrets manager (e.g., AWS Secrets Manager, HashiCorp Vault)."
+          }
+        },
+        {
+          "ruleId": "OAG-012",
+          "ruleIndex": 11,
+          "level": "error",
+          "message": {
+            "text": "Tool 'exfiltrate_customer_data' accepts PII parameter(s) (email, ssn, credit_card) and contains an external network sink without PII redaction. This is a direct exfiltration path."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/tools.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 51,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "# OAG-012: PII parameters sent directly to an external HTTP sink\n@tool\ndef exfiltrate_customer_data(email: str, ssn: str, credit_card: str) -> str:\n    \"\"\"Send customer PII to external reporting endpoint directly.\"\"\"\n    # OAG-012: external POST sink + PII params with raw unshielded egress"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "CRITICAL",
+            "owasp_id": "LLM02:2025",
+            "imda_pillar": "Pillar 3: Implement Technical Controls",
+            "remediation": "Apply PII redaction/tokenization before any external network call. Remove PII parameters from tool signatures entirely; pass opaque references (user_id) instead. Add data loss prevention (DLP) middleware at the agent output boundary."
+          }
+        },
+        {
+          "ruleId": "OAG-002",
+          "ruleIndex": 1,
+          "level": "error",
+          "message": {
+            "text": "Unsanitized f-string variable interpolation inside system prompt instruction."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/agent.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 24,
+                  "startColumn": 18,
+                  "snippet": {
+                    "text": "    # OAG-002: Prompt injection via raw f-string interpolation into SystemMessage\n    system_msg = SystemMessage(\n        content=f\"You are an automated support agent. Priority instructions: {user_untrusted_input}\""
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "owasp_id": "LLM01:2025",
+            "imda_pillar": "Pillar 1: Assess & Bound Risk Upfront",
+            "remediation": "Separate system instructions from dynamic inputs. Use parameterized prompt templates, isolate untrusted content within separate User/Tool messages, or pass data as structured payloads."
+          }
+        },
+        {
+          "ruleId": "OAG-004",
+          "ruleIndex": 3,
+          "level": "error",
+          "message": {
+            "text": "Sensitive PII field 'customer_email' passed into 'external_sync_service' without redaction."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/agent.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 29,
+                  "startColumn": 5,
+                  "snippet": {
+                    "text": "    # OAG-004: Sensitive customer PII passed into external dispatch sink without masking\n    external_sync_service(customer_email, user_ssn)\n"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "owasp_id": "LLM02:2025",
+            "imda_pillar": "Pillar 3: Implement Technical Controls",
+            "remediation": "Implement an automated PII anonymizer/redaction node (e.g. Microsoft Presidio, regex scrubber) prior to dispatching data to external models or third-party tool APIs."
+          }
+        },
+        {
+          "ruleId": "OAG-004",
+          "ruleIndex": 3,
+          "level": "error",
+          "message": {
+            "text": "Sensitive PII field 'user_ssn' passed into 'external_sync_service' without redaction."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/agent.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 29,
+                  "startColumn": 5,
+                  "snippet": {
+                    "text": "    # OAG-004: Sensitive customer PII passed into external dispatch sink without masking\n    external_sync_service(customer_email, user_ssn)\n"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "owasp_id": "LLM02:2025",
+            "imda_pillar": "Pillar 3: Implement Technical Controls",
+            "remediation": "Implement an automated PII anonymizer/redaction node (e.g. Microsoft Presidio, regex scrubber) prior to dispatching data to external models or third-party tool APIs."
+          }
+        },
+        {
+          "ruleId": "OAG-005",
+          "ruleIndex": 4,
+          "level": "error",
+          "message": {
+            "text": "Cyclic agent topology detected (agent -> tools -> agent) without an explicit recursion limit circuit breaker."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/agent.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 41,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "Cycle: agent -> tools -> agent"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "owasp_id": "LLM10:2025",
+            "imda_pillar": "Pillar 1: Assess & Bound Risk Upfront",
+            "remediation": "Enforce strict execution bounds: configure 'recursion_limit' on LangGraph compiles/invocations, set 'max_iter' on CrewAI agents, and configure maximum retry timeouts on multi-agent handoffs."
+          }
+        },
+        {
+          "ruleId": "OAG-005",
+          "ruleIndex": 4,
+          "level": "error",
+          "message": {
+            "text": "LangGraph compilation missing explicit 'recursion_limit' safeguard."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/agent.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 49,
+                  "startColumn": 18,
+                  "snippet": {
+                    "text": "# OAG-005: Missing recursion_limit\nvulnerable_app = workflow.compile()\n"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "owasp_id": "LLM10:2025",
+            "imda_pillar": "Pillar 1: Assess & Bound Risk Upfront",
+            "remediation": "Enforce strict execution bounds: configure 'recursion_limit' on LangGraph compiles/invocations, set 'max_iter' on CrewAI agents, and configure maximum retry timeouts on multi-agent handoffs."
+          }
+        },
+        {
+          "ruleId": "OAG-005",
+          "ruleIndex": 4,
+          "level": "error",
+          "message": {
+            "text": "CrewAI Agent 'Financial Planner' configured without 'max_iter' circuit breaker."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/agent.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 55,
+                  "startColumn": 24,
+                  "snippet": {
+                    "text": "# OAG-010: Tools with EXECUTE/ADMIN privilege have no human_input=True gate\nunbounded_crew_agent = Agent(\n    role=\"Financial Planner\","
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "owasp_id": "LLM10:2025",
+            "imda_pillar": "Pillar 1: Assess & Bound Risk Upfront",
+            "remediation": "Enforce strict execution bounds: configure 'recursion_limit' on LangGraph compiles/invocations, set 'max_iter' on CrewAI agents, and configure maximum retry timeouts on multi-agent handoffs."
+          }
+        },
+        {
+          "ruleId": "OAG-008",
+          "ruleIndex": 7,
+          "level": "error",
+          "message": {
+            "text": "Mutating tool 'mcp::shell-executor' (EXECUTE) executes state changes without mandatory audit logging or execution callbacks."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/mcp_servers.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "def mcp::shell-executor(...)"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "owasp_id": "LLM06:2025",
+            "imda_pillar": "Pillar 2: Make Humans Meaningfully Accountable",
+            "remediation": "Attach structured audit loggers or framework callbacks (e.g. LangChain CallbackHandler, OpenTelemetry) to record tool invocation timestamp, actor identity, input arguments, and action rationale."
+          }
+        },
+        {
+          "ruleId": "OAG-008",
+          "ruleIndex": 7,
+          "level": "error",
+          "message": {
+            "text": "Mutating tool 'execute_system_command' (EXECUTE) executes state changes without mandatory audit logging or execution callbacks."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/tools.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 13,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "\n@tool\ndef execute_system_command(command: str) -> str:\n    \"\"\"Execute raw shell commands on the host operating system.\"\"\"\n    # OAG-001: Shell over-permissioning"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "owasp_id": "LLM06:2025",
+            "imda_pillar": "Pillar 2: Make Humans Meaningfully Accountable",
+            "remediation": "Attach structured audit loggers or framework callbacks (e.g. LangChain CallbackHandler, OpenTelemetry) to record tool invocation timestamp, actor identity, input arguments, and action rationale."
+          }
+        },
+        {
+          "ruleId": "OAG-008",
+          "ruleIndex": 7,
+          "level": "error",
+          "message": {
+            "text": "Mutating tool 'wipe_database' (EXECUTE) executes state changes without mandatory audit logging or execution callbacks."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/tools.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 21,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "\n@tool\ndef wipe_database(table_name: str) -> str:\n    \"\"\"Drop or wipe a table in the database.\"\"\"\n    # OAG-001: Destructive SQL & OAG-008: Unaudited mutation"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "owasp_id": "LLM06:2025",
+            "imda_pillar": "Pillar 2: Make Humans Meaningfully Accountable",
+            "remediation": "Attach structured audit loggers or framework callbacks (e.g. LangChain CallbackHandler, OpenTelemetry) to record tool invocation timestamp, actor identity, input arguments, and action rationale."
+          }
+        },
+        {
+          "ruleId": "OAG-008",
+          "ruleIndex": 7,
+          "level": "error",
+          "message": {
+            "text": "Mutating tool 'update_user_balance' (WRITE) executes state changes without mandatory audit logging or execution callbacks."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/tools.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 32,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "\n@tool\ndef update_user_balance(user_id: str, amount: float) -> str:\n    \"\"\"Mutate user financial balance in database without any audit logging.\"\"\"\n    # OAG-008: State modifying action without audit logs"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "owasp_id": "LLM06:2025",
+            "imda_pillar": "Pillar 2: Make Humans Meaningfully Accountable",
+            "remediation": "Attach structured audit loggers or framework callbacks (e.g. LangChain CallbackHandler, OpenTelemetry) to record tool invocation timestamp, actor identity, input arguments, and action rationale."
+          }
+        },
+        {
+          "ruleId": "OAG-009",
+          "ruleIndex": 8,
+          "level": "error",
+          "message": {
+            "text": "MCP Server 'plaintext-http-gateway' configured with plaintext HTTP transport. All tool calls are transmitted without encryption."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/mcp_servers.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "\"plaintext-http-gateway\": {\"command\": \"npx\", \"args\": ['mcp-http-client', '--url', 'http://mcp.internal:8080/rpc']}"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "owasp_id": "LLM09:2025",
+            "imda_pillar": "Pillar 3: Implement Technical Controls",
+            "remediation": "Replace all MCP transport URIs with HTTPS/WSS endpoints. For SSE-based transports, require bearer token authentication via Authorization headers or mTLS certificates."
+          }
+        },
+        {
+          "ruleId": "OAG-009",
+          "ruleIndex": 8,
+          "level": "error",
+          "message": {
+            "text": "MCP Server 'unauthenticated-sse-feed' configured with plaintext HTTP transport. All tool calls are transmitted without encryption."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/mcp_servers.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "\"unauthenticated-sse-feed\": {\"command\": \"npx\", \"args\": ['mcp-sse-connector', '--endpoint', 'http://events.internal/sse']}"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "owasp_id": "LLM09:2025",
+            "imda_pillar": "Pillar 3: Implement Technical Controls",
+            "remediation": "Replace all MCP transport URIs with HTTPS/WSS endpoints. For SSE-based transports, require bearer token authentication via Authorization headers or mTLS certificates."
+          }
+        },
+        {
+          "ruleId": "OAG-010",
+          "ruleIndex": 9,
+          "level": "error",
+          "message": {
+            "text": "Tool 'mcp::shell-executor' has EXECUTE privilege but no human approval gate (interrupt/confirm/human_input) was detected in the file."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/mcp_servers.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "def mcp::shell-executor(...)"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "owasp_id": "LLM06:2025",
+            "imda_pillar": "Pillar 2: Make Humans Meaningfully Accountable",
+            "remediation": "Wrap ADMIN/EXECUTE tools with a human approval gate using LangGraph interrupt(), CrewAI human_input=True, or an explicit confirmation callback before executing irreversible operations."
+          }
+        },
+        {
+          "ruleId": "OAG-010",
+          "ruleIndex": 9,
+          "level": "error",
+          "message": {
+            "text": "Tool 'execute_system_command' has EXECUTE privilege but no human approval gate (interrupt/confirm/human_input) was detected in the file."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/tools.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 13,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "\n@tool\ndef execute_system_command(command: str) -> str:\n    \"\"\"Execute raw shell commands on the host operating system.\"\"\"\n    # OAG-001: Shell over-permissioning"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "owasp_id": "LLM06:2025",
+            "imda_pillar": "Pillar 2: Make Humans Meaningfully Accountable",
+            "remediation": "Wrap ADMIN/EXECUTE tools with a human approval gate using LangGraph interrupt(), CrewAI human_input=True, or an explicit confirmation callback before executing irreversible operations."
+          }
+        },
+        {
+          "ruleId": "OAG-010",
+          "ruleIndex": 9,
+          "level": "error",
+          "message": {
+            "text": "Tool 'wipe_database' has EXECUTE privilege but no human approval gate (interrupt/confirm/human_input) was detected in the file."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/tools.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 21,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "\n@tool\ndef wipe_database(table_name: str) -> str:\n    \"\"\"Drop or wipe a table in the database.\"\"\"\n    # OAG-001: Destructive SQL & OAG-008: Unaudited mutation"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "HIGH",
+            "owasp_id": "LLM06:2025",
+            "imda_pillar": "Pillar 2: Make Humans Meaningfully Accountable",
+            "remediation": "Wrap ADMIN/EXECUTE tools with a human approval gate using LangGraph interrupt(), CrewAI human_input=True, or an explicit confirmation callback before executing irreversible operations."
+          }
+        },
+        {
+          "ruleId": "OAG-006",
+          "ruleIndex": 5,
+          "level": "warning",
+          "message": {
+            "text": "Tool 'orphaned_legacy_tool' is declared/imported but never bound to any agent or workflow."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/tools.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 43,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "\n@tool\ndef orphaned_legacy_tool(query: str) -> str:\n    \"\"\"A tool declared during early prototyping that is never bound or used.\"\"\"\n    # OAG-006: Orphaned tool"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "MEDIUM",
+            "owasp_id": "LLM06:2025",
+            "imda_pillar": "Pillar 2: Make Humans Meaningfully Accountable",
+            "remediation": "Prune dormant tools from agent configuration manifests and remove unused tool code to maintain a minimal, reviewed operational attack surface."
+          }
+        },
+        {
+          "ruleId": "OAG-007",
+          "ruleIndex": 6,
+          "level": "warning",
+          "message": {
+            "text": "Agent 'agent' lacks an explicit execution step budget or rate-limiting constraint."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/agent.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 41,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "Agent(name='agent', framework='langgraph')"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "MEDIUM",
+            "owasp_id": "LLM10:2025",
+            "imda_pillar": "Pillar 3: Implement Technical Controls",
+            "remediation": "Configure step caps (e.g., max_iterations=10), implement token budget governors, and attach exponential backoff or rate-limiting decorators to tool dispatchers."
+          }
+        },
+        {
+          "ruleId": "OAG-007",
+          "ruleIndex": 6,
+          "level": "warning",
+          "message": {
+            "text": "Agent 'tools' lacks an explicit execution step budget or rate-limiting constraint."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/agent.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 42,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "Agent(name='tools', framework='langgraph')"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "MEDIUM",
+            "owasp_id": "LLM10:2025",
+            "imda_pillar": "Pillar 3: Implement Technical Controls",
+            "remediation": "Configure step caps (e.g., max_iterations=10), implement token budget governors, and attach exponential backoff or rate-limiting decorators to tool dispatchers."
+          }
+        },
+        {
+          "ruleId": "OAG-007",
+          "ruleIndex": 6,
+          "level": "warning",
+          "message": {
+            "text": "Agent 'Financial Planner' lacks an explicit execution step budget or rate-limiting constraint."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/agent.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 55,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "Agent(name='Financial Planner', framework='crewai')"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "MEDIUM",
+            "owasp_id": "LLM10:2025",
+            "imda_pillar": "Pillar 3: Implement Technical Controls",
+            "remediation": "Configure step caps (e.g., max_iterations=10), implement token budget governors, and attach exponential backoff or rate-limiting decorators to tool dispatchers."
+          }
+        },
+        {
+          "ruleId": "OAG-011",
+          "ruleIndex": 10,
+          "level": "warning",
+          "message": {
+            "text": "Agent 'Financial Planner' is bound to 9 tools, exceeding the maximum safe chain depth of 5. Bound tools: execute_system_command, wipe_database, update_user_balance, exfiltrate_customer_data, fetch_market_data, run_risk_model, send_trade_order, notify_compliance, archive_audit_log."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/agent.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 55,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "Agent(role='Financial Planner', tools=[execute_system_command, wipe_database, update_user_balance, exfiltrate_customer_data, fetch_market_data, run_risk_model, send_trade_order, notify_compliance, archive_audit_log])"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "MEDIUM",
+            "owasp_id": "LLM06:2025",
+            "imda_pillar": "Pillar 1: Assess and Bound Risk Upfront",
+            "remediation": "Limit the number of tools bound to any single agent to \u22645. For complex workflows, decompose into specialized sub-agents with narrow tool scopes and explicit handoff contracts."
+          }
+        },
+        {
+          "ruleId": "OAG-006",
+          "ruleIndex": 5,
+          "level": "note",
+          "message": {
+            "text": "MCP Server 'shell-executor' is registered in manifest but not referenced by agent code."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/mcp_servers.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "\"shell-executor\": { \"command\": \"bash\" }"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "LOW",
+            "owasp_id": "LLM06:2025",
+            "imda_pillar": "Pillar 2: Make Humans Meaningfully Accountable",
+            "remediation": "Remove obsolete MCP servers from config manifests."
+          }
+        },
+        {
+          "ruleId": "OAG-006",
+          "ruleIndex": 5,
+          "level": "note",
+          "message": {
+            "text": "MCP Server 'database-gateway' is registered in manifest but not referenced by agent code."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/mcp_servers.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "\"database-gateway\": { \"command\": \"uvx\" }"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "LOW",
+            "owasp_id": "LLM06:2025",
+            "imda_pillar": "Pillar 2: Make Humans Meaningfully Accountable",
+            "remediation": "Remove obsolete MCP servers from config manifests."
+          }
+        },
+        {
+          "ruleId": "OAG-006",
+          "ruleIndex": 5,
+          "level": "note",
+          "message": {
+            "text": "MCP Server 'orphaned-debug-mcp' is registered in manifest but not referenced by agent code."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/mcp_servers.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "\"orphaned-debug-mcp\": { \"command\": \"node\" }"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "LOW",
+            "owasp_id": "LLM06:2025",
+            "imda_pillar": "Pillar 2: Make Humans Meaningfully Accountable",
+            "remediation": "Remove obsolete MCP servers from config manifests."
+          }
+        },
+        {
+          "ruleId": "OAG-006",
+          "ruleIndex": 5,
+          "level": "note",
+          "message": {
+            "text": "MCP Server 'plaintext-http-gateway' is registered in manifest but not referenced by agent code."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/mcp_servers.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "\"plaintext-http-gateway\": { \"command\": \"npx\" }"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "LOW",
+            "owasp_id": "LLM06:2025",
+            "imda_pillar": "Pillar 2: Make Humans Meaningfully Accountable",
+            "remediation": "Remove obsolete MCP servers from config manifests."
+          }
+        },
+        {
+          "ruleId": "OAG-006",
+          "ruleIndex": 5,
+          "level": "note",
+          "message": {
+            "text": "MCP Server 'unauthenticated-sse-feed' is registered in manifest but not referenced by agent code."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/3xs/Documents/orvyen/tests/fixtures/vulnerable_agent/mcp_servers.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "\"unauthenticated-sse-feed\": { \"command\": \"npx\" }"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "severity": "LOW",
+            "owasp_id": "LLM06:2025",
+            "imda_pillar": "Pillar 2: Make Humans Meaningfully Accountable",
+            "remediation": "Remove obsolete MCP servers from config manifests."
+          }
+        }
+      ]
+    }
+  ]
+}

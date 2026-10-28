@@ -1,0 +1,373 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "Orvyen Agentic",
+          "version": "0.3.0",
+          "semanticVersion": "0.3.0",
+          "informationUri": "https://github.com/algorzen/orvyen-agentic",
+          "rules": [
+            {
+              "id": "OAG-001",
+              "name": "ToolOver-Permissioning&DangerousExecutionScope",
+              "shortDescription": {
+                "text": "Tool Over-Permissioning & Dangerous Execution Scope"
+              },
+              "fullDescription": {
+                "text": "Identifies agent tools granted dangerous system access (arbitrary shell execution, unbounded filesystem deletion, or unrestricted database modification) without sandboxing."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "help": {
+                "text": "Constrain tool privileges to the exact minimum necessary. Replace raw shell or database execution tools with parameterized, read-only or strictly whitelisted operational handlers.",
+                "markdown": "**Remediation:** Constrain tool privileges to the exact minimum necessary. Replace raw shell or database execution tools with parameterized, read-only or strictly whitelisted operational handlers.\n\n- **OWASP LLM:** LLM06:2025\n- **IMDA Pillar:** Pillar 3: Implement Technical Controls"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "error",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM06:2025",
+                  "Pillar 3: Implement Technical Controls"
+                ],
+                "owasp_id": "LLM06:2025",
+                "imda_pillar": "Pillar 3: Implement Technical Controls"
+              }
+            },
+            {
+              "id": "OAG-002",
+              "name": "PromptInjectionSurfaceinSystemInstructions",
+              "shortDescription": {
+                "text": "Prompt Injection Surface in System Instructions"
+              },
+              "fullDescription": {
+                "text": "Detects raw string formatting, f-strings, or string concatenation interpolating dynamic variables directly into agent system prompts, allowing prompt injection and goal hijacking."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "help": {
+                "text": "Separate system instructions from dynamic inputs. Use parameterized prompt templates, isolate untrusted content within separate User/Tool messages, or pass data as structured payloads.",
+                "markdown": "**Remediation:** Separate system instructions from dynamic inputs. Use parameterized prompt templates, isolate untrusted content within separate User/Tool messages, or pass data as structured payloads.\n\n- **OWASP LLM:** LLM01:2025\n- **IMDA Pillar:** Pillar 1: Assess & Bound Risk Upfront"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "error",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM01:2025",
+                  "Pillar 1: Assess & Bound Risk Upfront"
+                ],
+                "owasp_id": "LLM01:2025",
+                "imda_pillar": "Pillar 1: Assess & Bound Risk Upfront"
+              }
+            },
+            {
+              "id": "OAG-003",
+              "name": "HardcodedCredentials&APIKeysinConfiguration",
+              "shortDescription": {
+                "text": "Hardcoded Credentials & API Keys in Configuration"
+              },
+              "fullDescription": {
+                "text": "Identifies API keys, authentication tokens, or private credentials stored directly in agent source code, environment manifests, or MCP server configuration files."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "help": {
+                "text": "Remove plain-text credentials immediately. Load all keys dynamically from environment variables or an enterprise secrets manager (e.g., AWS Secrets Manager, HashiCorp Vault).",
+                "markdown": "**Remediation:** Remove plain-text credentials immediately. Load all keys dynamically from environment variables or an enterprise secrets manager (e.g., AWS Secrets Manager, HashiCorp Vault).\n\n- **OWASP LLM:** LLM02:2025\n- **IMDA Pillar:** Pillar 3: Implement Technical Controls"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "error",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM02:2025",
+                  "Pillar 3: Implement Technical Controls"
+                ],
+                "owasp_id": "LLM02:2025",
+                "imda_pillar": "Pillar 3: Implement Technical Controls"
+              }
+            },
+            {
+              "id": "OAG-004",
+              "name": "UnfilteredPIIRoutingtoTools&PromptSinks",
+              "shortDescription": {
+                "text": "Unfiltered PII Routing to Tools & Prompt Sinks"
+              },
+              "fullDescription": {
+                "text": "Identifies customer PII (e.g. emails, phone numbers, identification numbers, credit cards) flowing into external tool calls or remote LLM completions without an intermediate redaction step."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "help": {
+                "text": "Implement an automated PII anonymizer/redaction node (e.g. Microsoft Presidio, regex scrubber) prior to dispatching data to external models or third-party tool APIs.",
+                "markdown": "**Remediation:** Implement an automated PII anonymizer/redaction node (e.g. Microsoft Presidio, regex scrubber) prior to dispatching data to external models or third-party tool APIs.\n\n- **OWASP LLM:** LLM02:2025\n- **IMDA Pillar:** Pillar 3: Implement Technical Controls"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "error",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM02:2025",
+                  "Pillar 3: Implement Technical Controls"
+                ],
+                "owasp_id": "LLM02:2025",
+                "imda_pillar": "Pillar 3: Implement Technical Controls"
+              }
+            },
+            {
+              "id": "OAG-005",
+              "name": "UnboundedAgent-to-AgentRecursion&GraphCycles",
+              "shortDescription": {
+                "text": "Unbounded Agent-to-Agent Recursion & Graph Cycles"
+              },
+              "fullDescription": {
+                "text": "Detects multi-agent workflows containing cyclic transitions, recursive delegation, or agent feedback loops lacking explicit recursion depth caps or step limits."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "help": {
+                "text": "Enforce strict execution bounds: configure 'recursion_limit' on LangGraph compiles/invocations, set 'max_iter' on CrewAI agents, and configure maximum retry timeouts on multi-agent handoffs.",
+                "markdown": "**Remediation:** Enforce strict execution bounds: configure 'recursion_limit' on LangGraph compiles/invocations, set 'max_iter' on CrewAI agents, and configure maximum retry timeouts on multi-agent handoffs.\n\n- **OWASP LLM:** LLM10:2025\n- **IMDA Pillar:** Pillar 1: Assess & Bound Risk Upfront"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "error",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM10:2025",
+                  "Pillar 1: Assess & Bound Risk Upfront"
+                ],
+                "owasp_id": "LLM10:2025",
+                "imda_pillar": "Pillar 1: Assess & Bound Risk Upfront"
+              }
+            },
+            {
+              "id": "OAG-006",
+              "name": "Orphaned&UndocumentedToolsorMCPServers",
+              "shortDescription": {
+                "text": "Orphaned & Undocumented Tools or MCP Servers"
+              },
+              "fullDescription": {
+                "text": "Identifies tools declared, imported, or configured in MCP server manifests that are never bound to an agent executor, graph node, or task, leaving an unreviewed attack surface."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "help": {
+                "text": "Prune dormant tools from agent configuration manifests and remove unused tool code to maintain a minimal, reviewed operational attack surface.",
+                "markdown": "**Remediation:** Prune dormant tools from agent configuration manifests and remove unused tool code to maintain a minimal, reviewed operational attack surface.\n\n- **OWASP LLM:** LLM06:2025\n- **IMDA Pillar:** Pillar 2: Make Humans Meaningfully Accountable"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "warning",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM06:2025",
+                  "Pillar 2: Make Humans Meaningfully Accountable"
+                ],
+                "owasp_id": "LLM06:2025",
+                "imda_pillar": "Pillar 2: Make Humans Meaningfully Accountable"
+              }
+            },
+            {
+              "id": "OAG-007",
+              "name": "MissingRate-Limits&AutonomousStepBudgets",
+              "shortDescription": {
+                "text": "Missing Rate-Limits & Autonomous Step Budgets"
+              },
+              "fullDescription": {
+                "text": "Detects autonomous agent loops or multi-agent orchestrations lacking step budgets, token ceilings, or invocation rate-limiting controls, risking runaway API spend and resource exhaustion."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "help": {
+                "text": "Configure step caps (e.g., max_iterations=10), implement token budget governors, and attach exponential backoff or rate-limiting decorators to tool dispatchers.",
+                "markdown": "**Remediation:** Configure step caps (e.g., max_iterations=10), implement token budget governors, and attach exponential backoff or rate-limiting decorators to tool dispatchers.\n\n- **OWASP LLM:** LLM10:2025\n- **IMDA Pillar:** Pillar 3: Implement Technical Controls"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "warning",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM10:2025",
+                  "Pillar 3: Implement Technical Controls"
+                ],
+                "owasp_id": "LLM10:2025",
+                "imda_pillar": "Pillar 3: Implement Technical Controls"
+              }
+            },
+            {
+              "id": "OAG-008",
+              "name": "UnauditedState-ModifyingToolActions",
+              "shortDescription": {
+                "text": "Unaudited State-Modifying Tool Actions"
+              },
+              "fullDescription": {
+                "text": "Flags tools performing external state mutations (database updates, filesystem writes, or network API requests) without structured audit logging, execution tracing, or callback telemetry."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "help": {
+                "text": "Attach structured audit loggers or framework callbacks (e.g. LangChain CallbackHandler, OpenTelemetry) to record tool invocation timestamp, actor identity, input arguments, and action rationale.",
+                "markdown": "**Remediation:** Attach structured audit loggers or framework callbacks (e.g. LangChain CallbackHandler, OpenTelemetry) to record tool invocation timestamp, actor identity, input arguments, and action rationale.\n\n- **OWASP LLM:** LLM06:2025\n- **IMDA Pillar:** Pillar 2: Make Humans Meaningfully Accountable"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "error",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM06:2025",
+                  "Pillar 2: Make Humans Meaningfully Accountable"
+                ],
+                "owasp_id": "LLM06:2025",
+                "imda_pillar": "Pillar 2: Make Humans Meaningfully Accountable"
+              }
+            },
+            {
+              "id": "OAG-009",
+              "name": "InsecureMCPTransport(HTTPwithoutTLS/SSEwithoutAuth)",
+              "shortDescription": {
+                "text": "Insecure MCP Transport (HTTP without TLS / SSE without Auth)"
+              },
+              "fullDescription": {
+                "text": "Detects MCP server connections configured over plaintext HTTP or SSE endpoints without authentication tokens, exposing tool invocations and agent state to network-level interception and man-in-the-middle attacks."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "help": {
+                "text": "Replace all MCP transport URIs with HTTPS/WSS endpoints. For SSE-based transports, require bearer token authentication via Authorization headers or mTLS certificates.",
+                "markdown": "**Remediation:** Replace all MCP transport URIs with HTTPS/WSS endpoints. For SSE-based transports, require bearer token authentication via Authorization headers or mTLS certificates.\n\n- **OWASP LLM:** LLM09:2025\n- **IMDA Pillar:** Pillar 3: Implement Technical Controls"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "error",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM09:2025",
+                  "Pillar 3: Implement Technical Controls"
+                ],
+                "owasp_id": "LLM09:2025",
+                "imda_pillar": "Pillar 3: Implement Technical Controls"
+              }
+            },
+            {
+              "id": "OAG-010",
+              "name": "MissingHuman-in-the-LoopforADMIN/EXECUTEPrivilegeTools",
+              "shortDescription": {
+                "text": "Missing Human-in-the-Loop for ADMIN/EXECUTE Privilege Tools"
+              },
+              "fullDescription": {
+                "text": "Identifies tools with ADMIN or EXECUTE privilege tier that are not gated behind any human approval check, confirmation callback, or interrupt mechanism. Per IMDA Pillar 2 and OWASP LLM06, high-impact actions require explicit human oversight before execution."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "help": {
+                "text": "Wrap ADMIN/EXECUTE tools with a human approval gate using LangGraph interrupt(), CrewAI human_input=True, or an explicit confirmation callback before executing irreversible operations.",
+                "markdown": "**Remediation:** Wrap ADMIN/EXECUTE tools with a human approval gate using LangGraph interrupt(), CrewAI human_input=True, or an explicit confirmation callback before executing irreversible operations.\n\n- **OWASP LLM:** LLM06:2025\n- **IMDA Pillar:** Pillar 2: Make Humans Meaningfully Accountable"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "error",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM06:2025",
+                  "Pillar 2: Make Humans Meaningfully Accountable"
+                ],
+                "owasp_id": "LLM06:2025",
+                "imda_pillar": "Pillar 2: Make Humans Meaningfully Accountable"
+              }
+            },
+            {
+              "id": "OAG-011",
+              "name": "ExcessiveToolChaining(ChainDepth>5)",
+              "shortDescription": {
+                "text": "Excessive Tool Chaining (Chain Depth >5)"
+              },
+              "fullDescription": {
+                "text": "Identifies agent configurations that allow sequential tool invocations exceeding 5 hops in a single reasoning cycle. Deep tool chains amplify prompt injection blast radius and make audit trails intractable. Each hop multiplies the agent's potential side-effect surface."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "help": {
+                "text": "Limit the number of tools bound to any single agent to \u22645. For complex workflows, decompose into specialized sub-agents with narrow tool scopes and explicit handoff contracts.",
+                "markdown": "**Remediation:** Limit the number of tools bound to any single agent to \u22645. For complex workflows, decompose into specialized sub-agents with narrow tool scopes and explicit handoff contracts.\n\n- **OWASP LLM:** LLM06:2025\n- **IMDA Pillar:** Pillar 1: Assess and Bound Risk Upfront"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "warning",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM06:2025",
+                  "Pillar 1: Assess and Bound Risk Upfront"
+                ],
+                "owasp_id": "LLM06:2025",
+                "imda_pillar": "Pillar 1: Assess and Bound Risk Upfront"
+              }
+            },
+            {
+              "id": "OAG-012",
+              "name": "SensitiveDataExfiltrationviaExternalNetworkSink",
+              "shortDescription": {
+                "text": "Sensitive Data Exfiltration via External Network Sink"
+              },
+              "fullDescription": {
+                "text": "Identifies tools that accept PII-named parameters (email, SSN, credit_card, etc.) and contain external network mutation sinks (HTTP POST/PUT, webhook, SMTP) without evidence of redaction or anonymization. This creates a direct PII exfiltration path controllable by agent reasoning."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "help": {
+                "text": "Apply PII redaction/tokenization before any external network call. Remove PII parameters from tool signatures entirely; pass opaque references (user_id) instead. Add data loss prevention (DLP) middleware at the agent output boundary.",
+                "markdown": "**Remediation:** Apply PII redaction/tokenization before any external network call. Remove PII parameters from tool signatures entirely; pass opaque references (user_id) instead. Add data loss prevention (DLP) middleware at the agent output boundary.\n\n- **OWASP LLM:** LLM02:2025\n- **IMDA Pillar:** Pillar 3: Implement Technical Controls"
+              },
+              "properties": {
+                "precision": "very-high",
+                "problem.severity": "error",
+                "tags": [
+                  "security",
+                  "ai-agent",
+                  "LLM02:2025",
+                  "Pillar 3: Implement Technical Controls"
+                ],
+                "owasp_id": "LLM02:2025",
+                "imda_pillar": "Pillar 3: Implement Technical Controls"
+              }
+            }
+          ]
+        }
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true,
+          "endTimeUtc": "2026-10-28T10:26:15.152182+00:00"
+        }
+      ],
+      "results": []
+    }
+  ]
+}

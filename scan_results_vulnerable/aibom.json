@@ -1,0 +1,406 @@
+{
+  "$schema": "https://orvyen.ai/schemas/aibom-v1.json",
+  "spec_version": "1.0.0",
+  "metadata": {
+    "timestamp": "2026-10-28T10:52:09.909684+00:00",
+    "scanner": "Orvyen Agentic Static Security Engine",
+    "scanner_version": "0.3.0",
+    "target_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent",
+    "files_scanned": 3,
+    "security_score": 0,
+    "frameworks": [
+      "langgraph",
+      "crewai",
+      "mcp",
+      "langchain"
+    ]
+  },
+  "agents": [
+    {
+      "name": "agent",
+      "framework": "langgraph",
+      "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\agent.py",
+      "line_number": 41,
+      "bound_tools": [],
+      "recursion_limit": null,
+      "step_limit": null
+    },
+    {
+      "name": "tools",
+      "framework": "langgraph",
+      "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\agent.py",
+      "line_number": 42,
+      "bound_tools": [],
+      "recursion_limit": null,
+      "step_limit": null
+    },
+    {
+      "name": "Financial Planner",
+      "framework": "crewai",
+      "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\agent.py",
+      "line_number": 55,
+      "bound_tools": [
+        "execute_system_command",
+        "wipe_database",
+        "update_user_balance",
+        "exfiltrate_customer_data",
+        "fetch_market_data",
+        "run_risk_model",
+        "send_trade_order",
+        "notify_compliance",
+        "archive_audit_log"
+      ],
+      "recursion_limit": null,
+      "step_limit": null
+    }
+  ],
+  "tools": {
+    "total_tools": 15,
+    "by_privilege": {
+      "admin": [],
+      "execute": [
+        {
+          "name": "mcp::shell-executor",
+          "framework": "mcp",
+          "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\mcp_servers.json",
+          "line_number": 1,
+          "dangerous_sinks": [
+            "MCPShellCommand: bash"
+          ],
+          "is_audited": false,
+          "is_bound": false
+        },
+        {
+          "name": "execute_system_command",
+          "framework": "langchain",
+          "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\tools.py",
+          "line_number": 13,
+          "dangerous_sinks": [
+            "ShellExecution: subprocess.run"
+          ],
+          "is_audited": false,
+          "is_bound": true
+        },
+        {
+          "name": "wipe_database",
+          "framework": "langchain",
+          "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\tools.py",
+          "line_number": 21,
+          "dangerous_sinks": [
+            "ShellExecution: cursor.execute"
+          ],
+          "is_audited": false,
+          "is_bound": true
+        }
+      ],
+      "write": [
+        {
+          "name": "update_user_balance",
+          "framework": "langchain",
+          "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\tools.py",
+          "line_number": 32,
+          "dangerous_sinks": [
+            "ShellExecution: cursor.execute",
+            "MutatingSQL: UPDATE ACCOUNTS SET BALANCE = BALANCE + "
+          ],
+          "is_audited": false,
+          "is_bound": true
+        }
+      ],
+      "read": [
+        {
+          "name": "mcp::database-gateway",
+          "framework": "mcp",
+          "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\mcp_servers.json",
+          "line_number": 1,
+          "dangerous_sinks": [],
+          "is_audited": false,
+          "is_bound": false
+        },
+        {
+          "name": "mcp::orphaned-debug-mcp",
+          "framework": "mcp",
+          "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\mcp_servers.json",
+          "line_number": 1,
+          "dangerous_sinks": [],
+          "is_audited": false,
+          "is_bound": false
+        },
+        {
+          "name": "mcp::plaintext-http-gateway",
+          "framework": "mcp",
+          "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\mcp_servers.json",
+          "line_number": 1,
+          "dangerous_sinks": [],
+          "is_audited": false,
+          "is_bound": false
+        },
+        {
+          "name": "mcp::unauthenticated-sse-feed",
+          "framework": "mcp",
+          "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\mcp_servers.json",
+          "line_number": 1,
+          "dangerous_sinks": [],
+          "is_audited": false,
+          "is_bound": false
+        },
+        {
+          "name": "orphaned_legacy_tool",
+          "framework": "langchain",
+          "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\tools.py",
+          "line_number": 43,
+          "dangerous_sinks": [],
+          "is_audited": false,
+          "is_bound": false
+        },
+        {
+          "name": "exfiltrate_customer_data",
+          "framework": "langchain",
+          "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\tools.py",
+          "line_number": 51,
+          "dangerous_sinks": [],
+          "is_audited": false,
+          "is_bound": true
+        },
+        {
+          "name": "fetch_market_data",
+          "framework": "langchain",
+          "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\tools.py",
+          "line_number": 69,
+          "dangerous_sinks": [],
+          "is_audited": false,
+          "is_bound": true
+        },
+        {
+          "name": "run_risk_model",
+          "framework": "langchain",
+          "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\tools.py",
+          "line_number": 75,
+          "dangerous_sinks": [],
+          "is_audited": false,
+          "is_bound": true
+        },
+        {
+          "name": "send_trade_order",
+          "framework": "langchain",
+          "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\tools.py",
+          "line_number": 81,
+          "dangerous_sinks": [],
+          "is_audited": false,
+          "is_bound": true
+        },
+        {
+          "name": "notify_compliance",
+          "framework": "langchain",
+          "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\tools.py",
+          "line_number": 89,
+          "dangerous_sinks": [],
+          "is_audited": false,
+          "is_bound": true
+        },
+        {
+          "name": "archive_audit_log",
+          "framework": "langchain",
+          "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\tools.py",
+          "line_number": 95,
+          "dangerous_sinks": [],
+          "is_audited": false,
+          "is_bound": true
+        }
+      ]
+    }
+  },
+  "mcp_servers": [
+    {
+      "name": "shell-executor",
+      "command": "bash",
+      "args": [
+        "-c"
+      ],
+      "env_keys": [],
+      "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\mcp_servers.json"
+    },
+    {
+      "name": "database-gateway",
+      "command": "uvx",
+      "args": [
+        "mcp-server-postgres",
+        "--host",
+        "db.internal"
+      ],
+      "env_keys": [
+        "OPENAI_API_KEY",
+        "DATABASE_PASSWORD"
+      ],
+      "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\mcp_servers.json"
+    },
+    {
+      "name": "orphaned-debug-mcp",
+      "command": "node",
+      "args": [
+        "dist/debug-server.js"
+      ],
+      "env_keys": [],
+      "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\mcp_servers.json"
+    },
+    {
+      "name": "plaintext-http-gateway",
+      "command": "npx",
+      "args": [
+        "mcp-http-client",
+        "--url",
+        "http://mcp.internal:8080/rpc"
+      ],
+      "env_keys": [],
+      "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\mcp_servers.json"
+    },
+    {
+      "name": "unauthenticated-sse-feed",
+      "command": "npx",
+      "args": [
+        "mcp-sse-connector",
+        "--endpoint",
+        "http://events.internal/sse"
+      ],
+      "env_keys": [],
+      "file_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent\\mcp_servers.json"
+    }
+  ],
+  "compliance": {
+    "singapore_imda": {
+      "score_percentage": 25,
+      "overall_status": "FAILED",
+      "pillars": {
+        "Pillar 1": {
+          "name": "Assess and Bound Risk Upfront",
+          "description": "Establish operational boundaries, maximum recursion limits, and failure fallback modes.",
+          "status": "NON-COMPLIANT",
+          "is_compliant": false,
+          "violation_count": 5,
+          "severities": {
+            "critical": 0,
+            "high": 4,
+            "medium": 1,
+            "low": 0
+          },
+          "governance_guidelines": "MAS AI Risk Management Guidelines / IMDA Agentic AI v1.5"
+        },
+        "Pillar 2": {
+          "name": "Make Humans Meaningfully Accountable",
+          "description": "Ensure clear tool ownership, avoid orphaned components, and record comprehensive audit logs.",
+          "status": "NON-COMPLIANT",
+          "is_compliant": false,
+          "violation_count": 13,
+          "severities": {
+            "critical": 0,
+            "high": 7,
+            "medium": 1,
+            "low": 5
+          },
+          "governance_guidelines": "MAS AI Risk Management Guidelines / IMDA Agentic AI v1.5"
+        },
+        "Pillar 3": {
+          "name": "Implement Technical Controls",
+          "description": "Enforce principle of least privilege on tools, secure secret storage, PII redaction, and rate limiting.",
+          "status": "NON-COMPLIANT",
+          "is_compliant": false,
+          "violation_count": 15,
+          "severities": {
+            "critical": 8,
+            "high": 4,
+            "medium": 3,
+            "low": 0
+          },
+          "governance_guidelines": "MAS AI Risk Management Guidelines / IMDA Agentic AI v1.5"
+        },
+        "Pillar 4": {
+          "name": "Enable End-User Responsibility",
+          "description": "Provide transparent capability disclosures, structured AIBOM manifests, and verifiable trails.",
+          "status": "COMPLIANT",
+          "is_compliant": true,
+          "violation_count": 0,
+          "severities": {
+            "critical": 0,
+            "high": 0,
+            "medium": 0,
+            "low": 0
+          },
+          "governance_guidelines": "MAS AI Risk Management Guidelines / IMDA Agentic AI v1.5"
+        }
+      },
+      "framework_version": "IMDA Model AI Governance Framework for Agentic AI (May 2026)",
+      "jurisdiction": "Singapore (IMDA / MAS)"
+    },
+    "owasp_llm_top10": {
+      "score_percentage": 0,
+      "overall_status": "FAIL",
+      "items": {
+        "LLM01": {
+          "title": "Prompt Injection",
+          "description": "Manipulating LLM behavior through crafted inputs in prompts.",
+          "status": "FAIL",
+          "is_pass": false,
+          "violation_count": 1,
+          "mapped_rules": [
+            "OAG-002"
+          ]
+        },
+        "LLM02": {
+          "title": "Sensitive Information Disclosure",
+          "description": "Exposing confidential data, hardcoded secrets, or PII via outputs/logs.",
+          "status": "FAIL",
+          "is_pass": false,
+          "violation_count": 6,
+          "mapped_rules": [
+            "OAG-003",
+            "OAG-004",
+            "OAG-012"
+          ]
+        },
+        "LLM06": {
+          "title": "Excessive Agency",
+          "description": "Granting agents over-permissioned tools, unbounded execution, or unaudited actions.",
+          "status": "FAIL",
+          "is_pass": false,
+          "violation_count": 18,
+          "mapped_rules": [
+            "OAG-001",
+            "OAG-006",
+            "OAG-008",
+            "OAG-010",
+            "OAG-011"
+          ]
+        },
+        "LLM09": {
+          "title": "Misinformation / Insecure Plugin Design",
+          "description": "Insecure MCP/plugin transport exposing tool calls to interception.",
+          "status": "FAIL",
+          "is_pass": false,
+          "violation_count": 2,
+          "mapped_rules": [
+            "OAG-009"
+          ]
+        },
+        "LLM10": {
+          "title": "Unbounded Consumption",
+          "description": "Resource exhaustion and financial loss from unconstrained loops and missing budgets.",
+          "status": "FAIL",
+          "is_pass": false,
+          "violation_count": 6,
+          "mapped_rules": [
+            "OAG-005",
+            "OAG-007"
+          ]
+        }
+      },
+      "standard": "OWASP Top 10 for LLM Applications"
+    }
+  },
+  "findings_summary": {
+    "total": 33,
+    "critical": 8,
+    "high": 15,
+    "medium": 5,
+    "low": 5
+  }
+}

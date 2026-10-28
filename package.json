@@ -1,0 +1,39 @@
+{
+  "name": "orvyen-agentic",
+  "version": "0.3.0",
+  "description": "Static Security & Compliance Scanner for AI Agents (LangChain, LangGraph, CrewAI, MCP)",
+  "keywords": [
+    "ai-agent-security",
+    "sast",
+    "imda",
+    "mas",
+    "owasp",
+    "ai-security",
+    "agentic-ai",
+    "langchain",
+    "langgraph",
+    "crewai",
+    "mcp",
+    "aibom"
+  ],
+  "author": "Algorzen Pte. Ltd. <singh.ojas.555@gmail.com>",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/algorzen/orvyen-agentic",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/algorzen/orvyen-agentic.git"
+  },
+  "bin": {
+    "orvyen-agentic": "./bin/orvyen-agentic.js"
+  },
+  "scripts": {
+    "postinstall": "node bin/check-python.js"
+  },
+  "files": [
+    "bin/",
+    "orvyen/"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

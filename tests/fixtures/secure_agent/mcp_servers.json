@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "enterprise-docs": {
+      "command": "uvx",
+      "args": ["mcp-server-knowledge", "--read-only"],
+      "env": {
+        "DOC_API_KEY": "${DOC_API_KEY}"
+      },
+      "tools": ["search_docs"]
+    }
+  }
+}

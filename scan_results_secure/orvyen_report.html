@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orvyen Agentic Security & Compliance Report</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card-bg: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --text-heading: #f0f6fc;
+            --accent: #58a6ff;
+            --crit: #f85149;
+            --high: #ff7b72;
+            --med: #d29922;
+            --low: #3fb950;
+            --info: #8b949e;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 32px 24px;
+            line-height: 1.5;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 24px;
+            margin-bottom: 28px;
+        }
+        .brand-title { font-size: 26px; font-weight: 700; color: var(--text-heading); }
+        .brand-subtitle { font-size: 14px; color: #8b949e; margin-top: 4px; }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .metric-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        .metric-val { font-size: 32px; font-weight: 700; color: var(--text-heading); margin-top: 4px; }
+        .metric-label { font-size: 13px; text-transform: uppercase; color: #8b949e; letter-spacing: 0.5px; }
+        .score-good { color: #3fb950; }
+        .score-warn { color: #d29922; }
+        .score-bad { color: #f85149; }
+        
+        /* Tabs */
+        .tabs { display: flex; gap: 12px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+        .tab-btn {
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: #8b949e;
+            font-size: 15px;
+            font-weight: 600;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Finding Cards */
+        .finding-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: border-color 0.2s;
+        }
+        .finding-critical { border-left: 4px solid var(--crit); }
+        .finding-high { border-left: 4px solid var(--high); }
+        .finding-medium { border-left: 4px solid var(--med); }
+        .finding-low { border-left: 4px solid var(--low); }
+        .finding-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+        .finding-title { font-size: 18px; color: var(--text-heading); font-weight: 600; }
+        .finding-id { font-size: 13px; font-family: monospace; color: #8b949e; }
+        .finding-meta { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: #8b949e; margin-bottom: 12px; }
+        .finding-msg { font-size: 14px; margin-bottom: 12px; }
+        .code-box {
+            background: #090d13;
+            border: 1px solid #21262d;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin-bottom: 12px;
+        }
+        .remediation-box {
+            background: #1f2937;
+            border-left: 3px solid var(--accent);
+            padding: 10px 14px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .rem-label { font-weight: 600; color: var(--accent); margin-right: 6px; }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge-critical { background: #490202; color: #ff8182; border: 1px solid #da3633; }
+        .badge-high { background: #3d1413; color: #ff9b9b; border: 1px solid #f85149; }
+        .badge-medium { background: #3d2f0a; color: #e3b341; border: 1px solid #bb8009; }
+        .badge-low { background: #11341c; color: #56d364; border: 1px solid #238636; }
+        .badge-admin { background: #490202; color: #ff8182; }
+        .badge-execute { background: #3d1413; color: #ff9b9b; }
+        .badge-write { background: #3d2f0a; color: #e3b341; }
+        .badge-read { background: #11341c; color: #56d364; }
+        .badge-pass { background: #11341c; color: #56d364; }
+        .badge-fail { background: #3d1413; color: #ff9b9b; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { padding: 12px 14px; border: 1px solid var(--border); text-align: left; font-size: 14px; }
+        th { background: #21262d; color: var(--text-heading); font-weight: 600; }
+        tr:nth-child(even) { background: #161b22; }
+        .status-yes { color: #3fb950; font-weight: 600; }
+        .status-no { color: #f85149; font-weight: 600; }
+        
+        footer {
+            margin-top: 48px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 13px;
+            color: #8b949e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1 class="brand-title">ORVYEN AGENTIC</h1>
+                <p class="brand-subtitle">Static Security & Compliance Scanner for AI Agents &bull; AIBOM v1.0</p>
+            </div>
+            <div>
+                <span class="badge badge-low">Audit Certified</span>
+            </div>
+        </header>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Security Health</div>
+                <div class="metric-val score-good">100 / 100</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Total Findings</div>
+                <div class="metric-val">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Critical / High</div>
+                <div class="metric-val score-bad">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Agent Tools Scanned</div>
+                <div class="metric-val">3</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Singapore IMDA</div>
+                <div class="metric-val score-good">100%</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('tab-findings', this)">Vulnerability Findings (0)</button>
+            <button class="tab-btn" onclick="showTab('tab-aibom', this)">Agent Bill of Materials (AIBOM)</button>
+            <button class="tab-btn" onclick="showTab('tab-compliance', this)">Governance & Regulations</button>
+        </div>
+
+        <div id="tab-findings" class="tab-content active">
+            <p style="color: #3fb950; font-weight: 600;">No security vulnerabilities identified in target codebase.</p>
+        </div>
+
+        <div id="tab-aibom" class="tab-content">
+            <h2 style="margin-bottom: 12px; color: var(--text-heading);">Declared Tools & Capability Permissions</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tool Name</th>
+                        <th>Privilege Tier</th>
+                        <th>Framework</th>
+                        <th>Audited</th>
+                        <th>Bound</th>
+                        <th>Identified Sinks</th>
+                        <th>Source Location</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                <tr>
+                    <td><code>mcp::enterprise-docs</code></td>
+                    <td><span class="badge badge-read">READ</span></td>
+                    <td>mcp</td>
+                    <td><span class="status-no">No</span></td>
+                    <td><span class="status-yes">Yes</span></td>
+                    <td><small>None</small></td>
+                    <td><small>C:\Users\3xs\Documents\orvyen\tests\fixtures\secure_agent\mcp_servers.json:1</small></td>
+                </tr>
+                
+                <tr>
+                    <td><code>fetch_account_summary</code></td>
+                    <td><span class="badge badge-read">READ</span></td>
+                    <td>langchain</td>
+                    <td><span class="status-yes">Yes</span></td>
+                    <td><span class="status-yes">Yes</span></td>
+                    <td><small>None</small></td>
+                    <td><small>C:\Users\3xs\Documents\orvyen\tests\fixtures\secure_agent\tools.py:12</small></td>
+                </tr>
+                
+                <tr>
+                    <td><code>search_knowledge_base</code></td>
+                    <td><span class="badge badge-read">READ</span></td>
+                    <td>langchain</td>
+                    <td><span class="status-yes">Yes</span></td>
+                    <td><span class="status-yes">Yes</span></td>
+                    <td><small>None</small></td>
+                    <td><small>C:\Users\3xs\Documents\orvyen\tests\fixtures\secure_agent\tools.py:20</small></td>
+                </tr>
+                
+                </tbody>
+            </table>
+        </div>
+
+        <div id="tab-compliance" class="tab-content">
+            <h2 style="margin-bottom: 12px; color: var(--text-heading);">Singapore IMDA Framework for Agentic AI (May 2026)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Pillar</th>
+                        <th>Focus Name</th>
+                        <th>Status</th>
+                        <th>Violations</th>
+                        <th>Guideline Scope</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+            <tr>
+                <td><strong>Pillar 1</strong></td>
+                <td>Assess and Bound Risk Upfront</td>
+                <td><span class="badge badge-pass">COMPLIANT</span></td>
+                <td>0</td>
+                <td><small>Establish operational boundaries, maximum recursion limits, and failure fallback modes.</small></td>
+            </tr>
+            
+            <tr>
+                <td><strong>Pillar 2</strong></td>
+                <td>Make Humans Meaningfully Accountable</td>
+                <td><span class="badge badge-pass">COMPLIANT</span></td>
+                <td>0</td>
+                <td><small>Ensure clear tool ownership, avoid orphaned components, and record comprehensive audit logs.</small></td>
+            </tr>
+            
+            <tr>
+                <td><strong>Pillar 3</strong></td>
+                <td>Implement Technical Controls</td>
+                <td><span class="badge badge-pass">COMPLIANT</span></td>
+                <td>0</td>
+                <td><small>Enforce principle of least privilege on tools, secure secret storage, PII redaction, and rate limiting.</small></td>
+            </tr>
+            
+            <tr>
+                <td><strong>Pillar 4</strong></td>
+                <td>Enable End-User Responsibility</td>
+                <td><span class="badge badge-pass">COMPLIANT</span></td>
+                <td>0</td>
+                <td><small>Provide transparent capability disclosures, structured AIBOM manifests, and verifiable trails.</small></td>
+            </tr>
+            
+                </tbody>
+            </table>
+
+            <h2 style="margin-top: 32px; margin-bottom: 12px; color: var(--text-heading);">OWASP Top 10 for LLM Applications</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>OWASP ID</th>
+                        <th>Vulnerability Class</th>
+                        <th>Status</th>
+                        <th>Violations</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+            <tr>
+                <td><strong>LLM01</strong></td>
+                <td>Prompt Injection</td>
+                <td><span class="badge badge-pass">PASS</span></td>
+                <td>0</td>
+                <td><small>Manipulating LLM behavior through crafted inputs in prompts.</small></td>
+            </tr>
+            
+            <tr>
+                <td><strong>LLM02</strong></td>
+                <td>Sensitive Information Disclosure</td>
+                <td><span class="badge badge-pass">PASS</span></td>
+                <td>0</td>
+                <td><small>Exposing confidential data, hardcoded secrets, or PII via outputs/logs.</small></td>
+            </tr>
+            
+            <tr>
+                <td><strong>LLM06</strong></td>
+                <td>Excessive Agency</td>
+                <td><span class="badge badge-pass">PASS</span></td>
+                <td>0</td>
+                <td><small>Granting agents over-permissioned tools, unbounded execution, or unaudited actions.</small></td>
+            </tr>
+            
+            <tr>
+                <td><strong>LLM09</strong></td>
+                <td>Misinformation / Insecure Plugin Design</td>
+                <td><span class="badge badge-pass">PASS</span></td>
+                <td>0</td>
+                <td><small>Insecure MCP/plugin transport exposing tool calls to interception.</small></td>
+            </tr>
+            
+            <tr>
+                <td><strong>LLM10</strong></td>
+                <td>Unbounded Consumption</td>
+                <td><span class="badge badge-pass">PASS</span></td>
+                <td>0</td>
+                <td><small>Resource exhaustion and financial loss from unconstrained loops and missing budgets.</small></td>
+            </tr>
+            
+                </tbody>
+            </table>
+        </div>
+
+        <footer>
+            Generated by <strong>Orvyen Agentic</strong> &bull; Algorzen Pte. Ltd. &bull; Sub-100ms Pre-Deployment Agent Security
+        </footer>
+    </div>
+
+    <script>
+        function showTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+        }
+    </script>
+</body>
+</html>

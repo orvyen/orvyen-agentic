@@ -1,0 +1,103 @@
+name: 'Orvyen Agentic Security Scan'
+description: >
+  Static security and compliance scan for AI agent codebases.
+  Runs OAG-001 through OAG-012 rules against LangChain, LangGraph,
+  CrewAI, and MCP configurations. Fails the build on HIGH+ findings.
+
+author: 'Algorzen Pte. Ltd.'
+
+branding:
+  icon: 'shield'
+  color: 'red'
+
+inputs:
+  target:
+    description: 'Path to the agent codebase to scan (relative to workspace root)'
+    required: false
+    default: '.'
+  fail-on:
+    description: 'Minimum severity that causes a non-zero exit code (NONE/LOW/MEDIUM/HIGH/CRITICAL)'
+    required: false
+    default: 'HIGH'
+  format:
+    description: 'Output report format: terminal, json, html, aibom, or all'
+    required: false
+    default: 'json'
+  output-dir:
+    description: 'Directory where report files are written'
+    required: false
+    default: './orvyen-reports'
+  license-key:
+    description: 'Orvyen Pro license key (unlocks AIBOM Markdown clause mapping)'
+    required: false
+    default: ''
+
+outputs:
+  security-score:
+    description: 'Integer 0-100 security health score from the scan'
+  total-findings:
+    description: 'Total number of findings across all severity levels'
+  critical-count:
+    description: 'Number of CRITICAL severity findings'
+  high-count:
+    description: 'Number of HIGH severity findings'
+  report-path:
+    description: 'Absolute path to the generated JSON report'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Orvyen Agentic
+      shell: bash
+      run: |
+        pipx run orvyen-agentic --version 2>/dev/null || \
+        pip install --quiet orvyen-agentic==0.2.0
+
+    - name: Run Orvyen Agentic Scan
+      id: scan
+      shell: bash
+      env:
+        ORVYEN_LICENSE_KEY: ${{ inputs.license-key }}
+      run: |
+        set +e
+        ARGS=(
+          scan "${{ inputs.target }}"
+          --fail-on "${{ inputs.fail-on }}"
+          --format "${{ inputs.format }}"
+          --output-dir "${{ inputs.output-dir }}"
+        )
+        if [ -n "$ORVYEN_LICENSE_KEY" ]; then
+          ARGS+=(--license-key "$ORVYEN_LICENSE_KEY")
+        fi
+
+        pipx run orvyen-agentic "${ARGS[@]}"
+        EXIT_CODE=$?
+
+        # Extract metrics from the JSON report for step outputs
+        REPORT="${{ inputs.output-dir }}/orvyen_report.json"
+        if [ -f "$REPORT" ]; then
+          SCORE=$(python3 -c "import json,sys; d=json.load(open('$REPORT')); print(d['summary']['security_score'])" 2>/dev/null || echo "0")
+          TOTAL=$(python3 -c "import json,sys; d=json.load(open('$REPORT')); print(d['summary']['total_findings'])" 2>/dev/null || echo "0")
+          CRIT=$(python3 -c  "import json,sys; d=json.load(open('$REPORT')); print(d['summary']['critical'])" 2>/dev/null || echo "0")
+          HIGH=$(python3 -c  "import json,sys; d=json.load(open('$REPORT')); print(d['summary']['high'])" 2>/dev/null || echo "0")
+          echo "security-score=$SCORE"   >> "$GITHUB_OUTPUT"
+          echo "total-findings=$TOTAL"   >> "$GITHUB_OUTPUT"
+          echo "critical-count=$CRIT"    >> "$GITHUB_OUTPUT"
+          echo "high-count=$HIGH"        >> "$GITHUB_OUTPUT"
+          echo "report-path=$(realpath $REPORT)" >> "$GITHUB_OUTPUT"
+        fi
+
+        exit $EXIT_CODE
+
+    - name: Upload Scan Reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: orvyen-agentic-reports
+        path: ${{ inputs.output-dir }}/
+        retention-days: 30

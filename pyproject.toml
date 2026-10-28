@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "orvyen-agentic"
+version = "0.3.0"
+description = "Static Security & Compliance Scanner for AI Agents (LangChain, LangGraph, CrewAI, MCP)"
+readme = "README.md"
+authors = [
+    { name = "Algorzen Pte. Ltd.", email = "singh.ojas.555@gmail.com" }
+]
+license = { text = "Apache-2.0 core + proprietary compliance/" }
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Topic :: Security",
+    "Topic :: Software Development :: Quality Assurance",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+keywords = [
+    "ai-agent-security",
+    "sast",
+    "imda",
+    "mas",
+    "owasp",
+    "ai-security",
+    "agentic-ai",
+    "langchain",
+    "langgraph",
+    "crewai",
+    "mcp",
+    "aibom",
+    "sarif",
+]
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+pdf = ["reportlab>=4.0.0"]
+
+[project.scripts]
+orvyen-agentic = "orvyen.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/algorzen/orvyen-agentic"
+Documentation = "https://github.com/algorzen/orvyen-agentic#readme"
+Repository = "https://github.com/algorzen/orvyen-agentic.git"
+
+[tool.setuptools.packages.find]
+include = ["orvyen*"]
+exclude = ["tests*", "scan_results*"]
