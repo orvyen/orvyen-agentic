@@ -134,7 +134,7 @@ def interactive_loop(
     while True:
         try:
             if is_fancy and sys.stdin.isatty():
-                raw = InteractivePrompt.ask(utf8=True)
+                raw = InteractivePrompt.ask(initial_text="/scan", utf8=True)
             else:
                 raw = input(f"  {GRAY_MUTED}>{RESET} ").strip()
         except (KeyboardInterrupt, EOFError):
@@ -187,12 +187,18 @@ def interactive_loop(
             ConsoleReporter.print_result(res, min_severity=min_sev, compact=is_compact, fancy=is_fancy)
 
         elif cmd in ("/aibom", "aibom"):
+            if is_fancy:
+                os.system("cls" if os.name == "nt" else "clear")
+                ConsoleReporter.print_header(None, fancy=is_fancy)
             engine = ScanEngine(curr_target)
             res = engine.run()
             res.aibom = AIBOMCompiler.compile(res)
             ConsoleReporter.print_aibom(res.aibom, utf8=is_fancy)
 
         elif cmd in ("/compliance", "compliance"):
+            if is_fancy:
+                os.system("cls" if os.name == "nt" else "clear")
+                ConsoleReporter.print_header(None, fancy=is_fancy)
             engine = ScanEngine(curr_target)
             res = engine.run()
             imda = IMDAComplianceEvaluator.evaluate(res.findings)
@@ -200,6 +206,9 @@ def interactive_loop(
             ConsoleReporter.print_compliance(imda, owasp, utf8=is_fancy)
 
         elif cmd in ("/help", "help"):
+            if is_fancy:
+                os.system("cls" if os.name == "nt" else "clear")
+                ConsoleReporter.print_header(None, fancy=is_fancy)
             ConsoleReporter.print_help(utf8=is_fancy)
 
         elif cmd in ("/clear", "clear", "cls"):

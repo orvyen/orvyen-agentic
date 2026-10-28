@@ -779,7 +779,7 @@ def print_help(fancy: bool = True) -> None:
 
 
 class InteractivePrompt:
-    """Live interactive terminal input box with blinking cursor and dynamic dropdown autocomplete."""
+    """Live interactive terminal input box with blinking hardware cursor and dynamic dropdown autocomplete."""
 
     COMMANDS = [
         ("/scan", "Scan agent codebase pre-deploy [OAG-001..OAG-012]"),
@@ -795,7 +795,7 @@ class InteractivePrompt:
     @classmethod
     def get_filtered(cls, text: str) -> List[tuple[str, str]]:
         clean = text.strip()
-        if not clean or clean == "/":
+        if not clean or clean in ("/", "/scan"):
             return cls.COMMANDS[:5]
         if clean.startswith("/"):
             matches = [c for c in cls.COMMANDS if c[0].startswith(clean)]
@@ -807,7 +807,7 @@ class InteractivePrompt:
         return [("/scan " + clean, "Scan specified path pre-deploy")]
 
     @classmethod
-    def render_widget(cls, text: str, cursor_visible: bool, selected_idx: int, utf8: bool = True, width: int = 72) -> int:
+    def render_widget(cls, text: str, selected_idx: int, utf8: bool = True, width: int = 72) -> int:
         filtered = cls.get_filtered(text)
         selected_idx = max(0, min(selected_idx, len(filtered) - 1))
 
@@ -817,43 +817,48 @@ class InteractivePrompt:
         v = "│" if utf8 else "|"
 
         lines = []
-        # 1. Input Box
+        # 1. Input Box (bg #111 border #222)
         lines.append(f"  {fg('#222222')}{tl}{h_line}{tr}{RESET}")
-        cursor_ch = f"{WHITE}█{RESET}" if cursor_visible else " "
         disp_text = text[-62:] if len(text) > 62 else text
-        pad = " " * max(1, inner_w - 4 - len(disp_text) - 1)
-        lines.append(f"  {fg('#222222')}{v}{bg('#111111')}  {GRAY_MUTED}> {BOLD}{WHITE}{disp_text}{RESET}{bg('#111111')}{cursor_ch}{pad}{fg('#222222')}{v}{RESET}")
+        pad = " " * max(1, inner_w - 4 - len(disp_text))
+        lines.append(f"  {fg('#222222')}{v}{bg('#111111')}  {GRAY_MUTED}> {BOLD}{WHITE}{disp_text}{RESET}{bg('#111111')}{pad}{fg('#222222')}{v}{RESET}")
         lines.append(f"  {fg('#222222')}{bl}{h_line}{br}{RESET}")
         lines.append("")
 
-        # 2. Dropdown Card
+        # 2. Dropdown Card (bg #151515 border #222)
         lines.append(f"  {fg('#222222')}{tl}{h_line}{tr}{RESET}")
+        cmd_col_w = 15
+        max_desc_w = inner_w - 1 - 1 - cmd_col_w - 1  # 52 chars
         for idx, (cmd, desc) in enumerate(filtered):
-            cmd_disp = cmd[:20]
-            max_desc = max(10, 67 - len(cmd_disp) - 1)
-            desc_disp = desc[:max_desc]
-            sp = " " * max(1, 67 - len(cmd_disp) - len(desc_disp))
+            cmd_disp = cmd[:cmd_col_w]
+            desc_clean = desc[:max_desc_w]
+            trailing = " " * max(0, max_desc_w - len(desc_clean))
 
             if idx == selected_idx:
                 left_bar = f"{CYAN_ACCENT}▌{RESET}"
-                row = f"{bg('#0F1F25')} {BOLD}{WHITE}{cmd_disp}{RESET}{bg('#0F1F25')}{sp}{GRAY_MUTED}{desc_disp} {RESET}"
+                row = f"{bg('#0F1F25')} {BOLD}{WHITE}{cmd_disp:<{cmd_col_w}}{RESET}{bg('#0F1F25')} {GRAY_MUTED}{desc_clean}{trailing}{RESET}"
                 lines.append(f"  {fg('#222222')}{v}{RESET}{left_bar}{row}{fg('#222222')}{v}{RESET}")
             else:
                 left_bar = f"{bg('#151515')} {RESET}"
-                row = f"{bg('#151515')} {WHITE}{cmd_disp}{sp}{GRAY_MUTED}{desc_disp} {RESET}"
+                row = f"{bg('#151515')} {WHITE}{cmd_disp:<{cmd_col_w}} {GRAY_MUTED}{desc_clean}{trailing}{RESET}"
                 lines.append(f"  {fg('#222222')}{v}{RESET}{left_bar}{row}{fg('#222222')}{v}{RESET}")
 
         lines.append(f"  {fg('#222222')}{bl}{h_line}{br}{RESET}")
         lines.append(f"  {DIM}[↑/↓] Select  •  [Tab] Complete  •  [Enter] Execute  •  [Ctrl+C] Exit{RESET}")
 
-        output_str = "\n".join(lines) + "\n"
+        total_lines = len(lines)
+        up_count = total_lines - 1
+        col_count = 7 + len(disp_text)
+
+        # Output widget with cursor hidden, then reposition native cursor inside input box and show it
+        output_str = "\033[?25l" + "\n".join(lines) + f"\n\033[{up_count}A\r\033[{col_count}C\033[?25h"
         sys.stdout.write(output_str)
         sys.stdout.flush()
-        return len(lines)
+        return total_lines
 
     @classmethod
-    def ask(cls, initial_text: str = "", utf8: bool = True) -> str:
-        """Prompts the user interactively with live keystrokes, blinking cursor, and dropdown."""
+    def ask(cls, initial_text: str = "/scan", utf8: bool = True) -> str:
+        """Prompts the user interactively with in-box hardware blinking cursor and dropdown autocomplete."""
         if not sys.stdin.isatty():
             try:
                 raw = input().strip()
@@ -861,7 +866,6 @@ class InteractivePrompt:
             except (EOFError, KeyboardInterrupt):
                 return "exit"
 
-        import time
         is_windows = (os.name == "nt")
         if is_windows:
             try:
@@ -870,94 +874,83 @@ class InteractivePrompt:
                 is_windows = False
 
         text = initial_text
-        cursor_visible = True
         selected_idx = 0
-        last_blink = time.time()
-        last_lines = 0
+        is_first_render = True
 
         def redraw():
-            nonlocal last_lines
-            if last_lines > 0:
-                sys.stdout.write(f"\033[{last_lines}A\r")
-            last_lines = cls.render_widget(text, cursor_visible, selected_idx, utf8=utf8)
+            nonlocal is_first_render
+            if not is_first_render:
+                sys.stdout.write("\033[?25l\033[1A\r\033[J")
+            else:
+                is_first_render = False
+            cls.render_widget(text, selected_idx, utf8=utf8)
+
+        def clear_and_restore():
+            if not is_first_render:
+                sys.stdout.write("\033[?25l\033[1A\r\033[J\033[?25h")
+                sys.stdout.flush()
 
         redraw()
 
         try:
             while True:
-                now = time.time()
-                if now - last_blink >= 0.45:
-                    cursor_visible = not cursor_visible
-                    last_blink = now
-                    redraw()
-
                 key = None
                 if is_windows:
-                    if msvcrt.kbhit():
-                        ch = msvcrt.getwch()
-                        if ch in ('\x00', '\xe0'):
-                            code = msvcrt.getwch()
-                            if code == 'H': key = 'UP'
-                            elif code == 'P': key = 'DOWN'
-                            elif code == 'K': key = 'LEFT'
-                            elif code == 'M': key = 'RIGHT'
-                        elif ch in ('\r', '\n'):
-                            key = 'ENTER'
-                        elif ch == '\t':
-                            key = 'TAB'
-                        elif ch in ('\x08', '\x7f'):
-                            key = 'BACKSPACE'
-                        elif ch == '\x03':
-                            key = 'CTRL_C'
-                        elif ch == '\x04':
-                            key = 'CTRL_D'
-                        elif ch == '\x1b':
-                            key = 'ESC'
-                        elif ch.isprintable():
-                            key = ch
+                    ch = msvcrt.getwch()
+                    if ch in ('\x00', '\xe0'):
+                        code = msvcrt.getwch()
+                        if code == 'H': key = 'UP'
+                        elif code == 'P': key = 'DOWN'
+                        elif code == 'K': key = 'LEFT'
+                        elif code == 'M': key = 'RIGHT'
+                    elif ch in ('\r', '\n'):
+                        key = 'ENTER'
+                    elif ch == '\t':
+                        key = 'TAB'
+                    elif ch in ('\x08', '\x7f'):
+                        key = 'BACKSPACE'
+                    elif ch == '\x03':
+                        key = 'CTRL_C'
+                    elif ch in ('\x04', '\x1a'):
+                        key = 'CTRL_D'
+                    elif ch == '\x1b':
+                        key = 'ESC'
+                    elif ch.isprintable():
+                        key = ch
                 else:
-                    import select
-                    r, _, _ = select.select([sys.stdin], [], [], 0.05)
-                    if r:
-                        import tty, termios
-                        fd = sys.stdin.fileno()
-                        old_set = termios.tcgetattr(fd)
-                        try:
-                            tty.setraw(fd)
-                            ch = sys.stdin.read(1)
-                            if ch == '\x1b':
-                                r2, _, _ = select.select([sys.stdin], [], [], 0.05)
-                                if r2:
-                                    seq = sys.stdin.read(2)
-                                    if seq == '[A': key = 'UP'
-                                    elif seq == '[B': key = 'DOWN'
-                                else:
-                                    key = 'ESC'
-                            elif ch in ('\r', '\n'): key = 'ENTER'
-                            elif ch == '\t': key = 'TAB'
-                            elif ch in ('\x7f', '\x08'): key = 'BACKSPACE'
-                            elif ch == '\x03': key = 'CTRL_C'
-                            elif ch == '\x04': key = 'CTRL_D'
-                            elif ch.isprintable(): key = ch
-                        finally:
-                            termios.tcsetattr(fd, termios.TCSADRAIN, old_set)
+                    import tty, termios
+                    fd = sys.stdin.fileno()
+                    old_set = termios.tcgetattr(fd)
+                    try:
+                        tty.setraw(fd)
+                        ch = sys.stdin.read(1)
+                        if ch == '\x1b':
+                            import select
+                            r2, _, _ = select.select([sys.stdin], [], [], 0.05)
+                            if r2:
+                                seq = sys.stdin.read(2)
+                                if seq == '[A': key = 'UP'
+                                elif seq == '[B': key = 'DOWN'
+                            else:
+                                key = 'ESC'
+                        elif ch in ('\r', '\n'): key = 'ENTER'
+                        elif ch == '\t': key = 'TAB'
+                        elif ch in ('\x7f', '\x08'): key = 'BACKSPACE'
+                        elif ch == '\x03': key = 'CTRL_C'
+                        elif ch == '\x04': key = 'CTRL_D'
+                        elif ch.isprintable(): key = ch
+                    finally:
+                        termios.tcsetattr(fd, termios.TCSADRAIN, old_set)
 
                 if key is None:
-                    time.sleep(0.02)
                     continue
 
-                cursor_visible = True
-                last_blink = time.time()
-
                 if key == 'CTRL_C':
-                    sys.stdout.write(f"\033[{last_lines}A\r")
-                    for _ in range(last_lines):
-                        sys.stdout.write(" " * 78 + "\n")
-                    sys.stdout.write(f"\033[{last_lines}A\r")
-                    sys.stdout.flush()
+                    clear_and_restore()
                     raise KeyboardInterrupt
 
                 if key == 'CTRL_D':
+                    clear_and_restore()
                     return "exit"
 
                 if key == 'ENTER':
@@ -970,11 +963,7 @@ class InteractivePrompt:
                     else:
                         chosen = text.strip()
 
-                    sys.stdout.write(f"\033[{last_lines}A\r")
-                    for _ in range(last_lines):
-                        sys.stdout.write(" " * 78 + "\n")
-                    sys.stdout.write(f"\033[{last_lines}A\r")
-                    sys.stdout.flush()
+                    clear_and_restore()
                     return chosen
 
                 if key == 'TAB':
@@ -987,13 +976,17 @@ class InteractivePrompt:
 
                 if key == 'UP':
                     filtered = cls.get_filtered(text)
-                    selected_idx = (selected_idx - 1) % len(filtered) if filtered else 0
+                    if filtered:
+                        selected_idx = (selected_idx - 1) % len(filtered)
+                        text = filtered[selected_idx][0]
                     redraw()
                     continue
 
                 if key == 'DOWN':
                     filtered = cls.get_filtered(text)
-                    selected_idx = (selected_idx + 1) % len(filtered) if filtered else 0
+                    if filtered:
+                        selected_idx = (selected_idx + 1) % len(filtered)
+                        text = filtered[selected_idx][0]
                     redraw()
                     continue
 
@@ -1015,6 +1008,7 @@ class InteractivePrompt:
                     redraw()
                     continue
         except (KeyboardInterrupt, EOFError):
+            clear_and_restore()
             raise
 
 
