@@ -74,6 +74,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Display findings in compact single-line format (like Ruff / ESLint)",
     )
     scan_parser.add_argument(
+        "--fancy",
+        action="store_true",
+        help="Display Claude Code-style interactive terminal UI with block art logo and autocomplete menu",
+    )
+    scan_parser.add_argument(
         "-q", "--quiet",
         action="store_true",
         help="Suppress terminal decoration and summary banners",
@@ -114,6 +119,10 @@ def main(argv: list[str] | None = None) -> int:
             args.fail_on = "HIGH"
         if not hasattr(args, "aibom_only"):
             args.aibom_only = False
+        if not hasattr(args, "compact"):
+            args.compact = False
+        if not hasattr(args, "fancy"):
+            args.fancy = False
         if not hasattr(args, "quiet"):
             args.quiet = False
 
@@ -143,7 +152,15 @@ def main(argv: list[str] | None = None) -> int:
     if args.format in ("terminal", "all"):
         if not args.quiet:
             is_compact = getattr(args, "compact", False)
-            ConsoleReporter.print_result(result, min_severity=min_sev, compact=is_compact)
+            is_fancy = getattr(args, "fancy", False) or (
+                sys.stdout.isatty() and not is_compact
+            )
+            ConsoleReporter.print_result(
+                result,
+                min_severity=min_sev,
+                compact=is_compact,
+                fancy=is_fancy,
+            )
 
     if args.format in ("json", "all"):
         json_path = out_dir / "orvyen_report.json"
