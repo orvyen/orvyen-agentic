@@ -206,6 +206,10 @@ def interactive_loop(
             res = engine.run()
             res.aibom = AIBOMCompiler.compile(res)
             ConsoleReporter.print_aibom(res.aibom, utf8=is_fancy)
+            print(
+                f"  {DIM}[Ctrl+C] Exit  {bullet}  [Enter] Re-scan  {bullet}  "
+                f"[/aibom] Bill of Materials  {bullet}  [/compliance] Matrix  {bullet}  [/help] Help{RESET}"
+            )
 
         elif cmd in ("/compliance", "compliance"):
             engine = ScanEngine(curr_target)
@@ -213,24 +217,17 @@ def interactive_loop(
             imda = IMDAComplianceEvaluator.evaluate(res.findings)
             owasp = OWASPComplianceEvaluator.evaluate(res.findings)
             ConsoleReporter.print_compliance(imda, owasp, utf8=is_fancy)
+            print(
+                f"  {DIM}[Ctrl+C] Exit  {bullet}  [Enter] Re-scan  {bullet}  "
+                f"[/aibom] Bill of Materials  {bullet}  [/compliance] Matrix  {bullet}  [/help] Help{RESET}"
+            )
 
         elif cmd in ("/help", "help"):
-            print()
-            print(f"{BOLD}{WHITE}Orvyen Agentic Interactive Commands:{RESET}")
-            print(f"  {CYAN}/scan [path]{RESET}    - Re-scan current target or specified path")
-            print(f"  {CYAN}/aibom{RESET}          - View Agent Bill of Materials")
-            print(f"  {CYAN}/compliance{RESET}     - View detailed IMDA & OWASP compliance breakdown")
-            print(f"  {CYAN}/secure{RESET}         - Run benchmark against secure_agent fixture")
-            print(f"  {CYAN}/vulnerable{RESET}     - Run benchmark against vulnerable_agent fixture")
-            print(f"  {CYAN}/clear{RESET}          - Clear terminal screen")
-            print(f"  {CYAN}/help{RESET}           - Show this help message")
-            print(f"  {CYAN}/exit, q{RESET}        - Exit interactive session")
-            print()
-            print(f"{BOLD}{WHITE}Keyboard Shortcuts:{RESET}")
-            print(f"  {GREEN}Ctrl+C{RESET}          - Exit session immediately")
-            print(f"  {GREEN}Ctrl+D / Ctrl+Z{RESET} - Exit session (EOF)")
-            print(f"  {GREEN}Enter{RESET}           - Re-run scan on current target")
-            print()
+            ConsoleReporter.print_help(utf8=is_fancy)
+            print(
+                f"  {DIM}[Ctrl+C] Exit  {bullet}  [Enter] Re-scan  {bullet}  "
+                f"[/aibom] Bill of Materials  {bullet}  [/compliance] Matrix  {bullet}  [/help] Help{RESET}"
+            )
 
         elif cmd in ("/clear", "clear", "cls"):
             os.system("cls" if os.name == "nt" else "clear")
@@ -387,6 +384,7 @@ def main(argv: list[str] | None = None) -> int:
         fail_threshold = Severity[args.fail_on]
         blocking_findings = [f for f in result.findings if f.severity >= fail_threshold]
         if blocking_findings:
+            sys.stdout.flush()
             if not args.quiet:
                 print(
                     f"\033[31m\033[1mScan FAILED: {len(blocking_findings)} violation(s) "

@@ -132,14 +132,32 @@ class AIBOMCompiler:
         tools = aibom_dict.get("tools", {})
         by_priv = tools.get("by_privilege", {})
 
+        raw_target = meta.get("target_path", ".")
+        try:
+            from pathlib import Path
+            rel_target = Path(raw_target).resolve().relative_to(Path.cwd().resolve()).as_posix()
+            display_target = f"./{rel_target}" if not rel_target.startswith(".") else rel_target
+        except Exception:
+            display_target = Path(raw_target).as_posix()
+
+        fw_map = {
+            "mcp": "MCP Gateway",
+            "langchain": "LangChain",
+            "langgraph": "LangGraph",
+            "crewai": "CrewAI",
+        }
+        raw_fws = meta.get("frameworks", [])
+        formatted_fws = [fw_map.get(f.lower(), f.capitalize()) for f in raw_fws]
+        fw_str = " • ".join(formatted_fws) if formatted_fws else "None"
+
         md = []
         md.append("# Agent Bill of Materials (AIBOM)")
         md.append("")
-        md.append(f"**Target System**: `{meta.get('target_path')}`  ")
+        md.append(f"**Target System**: `{display_target}`  ")
         md.append(f"**Generated**: {meta.get('timestamp')}  ")
         md.append(f"**Engine**: {meta.get('scanner')} v{meta.get('scanner_version')}  ")
         md.append(f"**Security Score**: **{meta.get('security_score')}/100**  ")
-        md.append(f"**Frameworks Detected**: {', '.join(meta.get('frameworks', [])) or 'None'}  ")
+        md.append(f"**Frameworks Detected**: {fw_str}  ")
         md.append("")
         md.append("---")
         md.append("")
@@ -154,9 +172,15 @@ class AIBOMCompiler:
             for t in by_priv.get(priv, []):
                 audited = "Yes" if t.get("is_audited") else "**NO**"
                 bound = "Yes" if t.get("is_bound") else "**NO**"
+                fp = t.get("file_path", "")
+                try:
+                    rel_fp = Path(fp).resolve().relative_to(Path.cwd().resolve()).as_posix()
+                    display_fp = f"./{rel_fp}" if not rel_fp.startswith(".") else rel_fp
+                except Exception:
+                    display_fp = Path(fp).as_posix()
                 md.append(
                     f"| `{t.get('name')}` | **{priv.upper()}** | {t.get('framework')} "
-                    f"| {audited} | {bound} | `{t.get('file_path')}:{t.get('line_number')}` |"
+                    f"| {audited} | {bound} | `{display_fp}:{t.get('line_number')}` |"
                 )
         md.append("")
 
@@ -168,7 +192,8 @@ class AIBOMCompiler:
             md.append("| :--- | :--- | :--- | :--- |")
             for s in mcp_servers:
                 args_str = " ".join(s.get("args", [])) or "None"
-                env_str = ", ".join(s.get("env_keys", [])) or "None"
+                env_keys = s.get("env_keys", [])
+                env_str = " • ".join(env_keys) if env_keys else "None"
                 md.append(f"| `{s.get('name')}` | `{s.get('command')}` | `{args_str}` | `{env_str}` |")
             md.append("")
 
@@ -189,14 +214,32 @@ class AIBOMCompiler:
         tools = aibom_dict.get("tools", {})
         by_priv = tools.get("by_privilege", {})
 
+        raw_target = meta.get("target_path", ".")
+        try:
+            from pathlib import Path
+            rel_target = Path(raw_target).resolve().relative_to(Path.cwd().resolve()).as_posix()
+            display_target = f"./{rel_target}" if not rel_target.startswith(".") else rel_target
+        except Exception:
+            display_target = Path(raw_target).as_posix()
+
+        fw_map = {
+            "mcp": "MCP Gateway",
+            "langchain": "LangChain",
+            "langgraph": "LangGraph",
+            "crewai": "CrewAI",
+        }
+        raw_fws = meta.get("frameworks", [])
+        formatted_fws = [fw_map.get(f.lower(), f.capitalize()) for f in raw_fws]
+        fw_str = " • ".join(formatted_fws) if formatted_fws else "None"
+
         md = []
         md.append("# Agent Bill of Materials (AIBOM)")
         md.append("")
-        md.append(f"**Target System**: `{meta.get('target_path')}`  ")
+        md.append(f"**Target System**: `{display_target}`  ")
         md.append(f"**Generated**: {meta.get('timestamp')}  ")
         md.append(f"**Engine**: {meta.get('scanner')} v{meta.get('scanner_version')}  ")
         md.append(f"**Security Score**: **{meta.get('security_score')}/100**  ")
-        md.append(f"**Frameworks Detected**: {', '.join(meta.get('frameworks', [])) or 'None'}  ")
+        md.append(f"**Frameworks Detected**: {fw_str}  ")
         md.append("")
         md.append("---")
         md.append("")
@@ -236,7 +279,13 @@ class AIBOMCompiler:
             for t in by_priv.get(priv, []):
                 audited = "Yes" if t.get("is_audited") else "**NO**"
                 bound = "Yes" if t.get("is_bound") else "**NO**"
-                md.append(f"| `{t.get('name')}` | **{priv.upper()}** | {t.get('framework')} | {audited} | {bound} | `{t.get('file_path')}:{t.get('line_number')}` |")
+                fp = t.get("file_path", "")
+                try:
+                    rel_fp = Path(fp).resolve().relative_to(Path.cwd().resolve()).as_posix()
+                    display_fp = f"./{rel_fp}" if not rel_fp.startswith(".") else rel_fp
+                except Exception:
+                    display_fp = Path(fp).as_posix()
+                md.append(f"| `{t.get('name')}` | **{priv.upper()}** | {t.get('framework')} | {audited} | {bound} | `{display_fp}:{t.get('line_number')}` |")
         md.append("")
 
         # 3. Model Context Protocol (MCP) Manifest
@@ -248,7 +297,8 @@ class AIBOMCompiler:
             md.append("| :--- | :--- | :--- | :--- |")
             for s in mcp_servers:
                 args_str = " ".join(s.get("args", [])) or "None"
-                env_str = ", ".join(s.get("env_keys", [])) or "None"
+                env_keys = s.get("env_keys", [])
+                env_str = " • ".join(env_keys) if env_keys else "None"
                 md.append(f"| `{s.get('name')}` | `{s.get('command')}` | `{args_str}` | `{env_str}` |")
             md.append("")
 
