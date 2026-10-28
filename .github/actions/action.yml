@@ -4,7 +4,7 @@ description: >
   Runs OAG-001 through OAG-012 rules against LangChain, LangGraph,
   CrewAI, and MCP configurations. Fails the build on HIGH+ findings.
 
-author: 'Algorzen Pte. Ltd.'
+author: 'Orvyen'
 
 branding:
   icon: 'shield'

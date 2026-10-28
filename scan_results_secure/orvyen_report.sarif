@@ -8,7 +8,7 @@
           "name": "Orvyen Agentic",
           "version": "0.3.0",
           "semanticVersion": "0.3.0",
-          "informationUri": "https://github.com/algorzen/orvyen-agentic",
+          "informationUri": "https://github.com/orvyen/orvyen-agentic",
           "rules": [
             {
               "id": "OAG-001",
@@ -364,7 +364,7 @@
       "invocations": [
         {
           "executionSuccessful": true,
-          "endTimeUtc": "2026-10-28T10:26:15.152182+00:00"
+          "endTimeUtc": "2026-10-28T16:46:56.454572+00:00"
         }
       ],
       "results": []

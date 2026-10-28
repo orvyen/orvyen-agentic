@@ -10,4 +10,5 @@ htmlcov/
 scan_results/
 scan_results_test/
 node_modules/
-
+*.docx
+log.txt

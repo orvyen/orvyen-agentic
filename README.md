@@ -206,5 +206,5 @@ python -m unittest discover -s tests -p "test_*.py" -v
 
 ## License & Attribution
 
-Developed by **Algorzen Pte. Ltd.** (Singapore).  
+Developed by **Orvyen**.  
 Licensed under the Apache-2.0 License.

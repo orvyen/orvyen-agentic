@@ -2,7 +2,7 @@ Metadata-Version: 2.4
 Name: orvyen-agentic
 Version: 0.3.0
 Summary: Static Security & Compliance Scanner for AI Agents (LangChain, LangGraph, CrewAI, MCP)
-Author-email: "Algorzen Pte. Ltd." <singh.ojas.555@gmail.com>
+Author-email: Orvyen <support@orvyen.dev>
 License: Apache-2.0 core + proprietary compliance/
 Project-URL: Homepage, https://github.com/orvyen/orvyen-agentic
 Project-URL: Documentation, https://github.com/orvyen/orvyen-agentic#readme
@@ -231,5 +231,5 @@ python -m unittest discover -s tests -p "test_*.py" -v
 
 ## License & Attribution
 
-Developed by **Algorzen Pte. Ltd.** (Singapore).  
+Developed by **Orvyen**.  
 Licensed under the Apache-2.0 License.

@@ -8,7 +8,7 @@ version = "0.3.0"
 description = "Static Security & Compliance Scanner for AI Agents (LangChain, LangGraph, CrewAI, MCP)"
 readme = "README.md"
 authors = [
-    { name = "Algorzen Pte. Ltd.", email = "singh.ojas.555@gmail.com" }
+    { name = "Orvyen", email = "support@orvyen.dev" }
 ]
 license = { text = "Apache-2.0 core + proprietary compliance/" }
 classifiers = [

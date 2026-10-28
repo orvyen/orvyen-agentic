@@ -136,7 +136,7 @@ class SARIFReporter:
                             "name": "Orvyen Agentic",
                             "version": scanner_version,
                             "semanticVersion": scanner_version,
-                            "informationUri": "https://github.com/algorzen/orvyen-agentic",
+                            "informationUri": "https://github.com/orvyen/orvyen-agentic",
                             "rules": sarif_rules,
                         }
                     },

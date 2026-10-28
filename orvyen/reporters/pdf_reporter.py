@@ -64,7 +64,7 @@ class _PDFCanvas:
         # Bottom footer line
         footer_y = PAGE_HEIGHT - 26
         self.draw_line(MARGIN_LEFT, footer_y - 4, MARGIN_LEFT + CONTENT_WIDTH, footer_y - 4, color=(0.85, 0.88, 0.92), width=0.75)
-        self.draw_text(MARGIN_LEFT, footer_y, "Algorzen Pte. Ltd. • Singapore IMDA Framework v1.5 • OWASP LLM Top 10", font="F1", size=7, color=(0.45, 0.50, 0.58))
+        self.draw_text(MARGIN_LEFT, footer_y, "Orvyen • Singapore IMDA Framework v1.5 • OWASP LLM Top 10", font="F1", size=7, color=(0.45, 0.50, 0.58))
         self.draw_text(PAGE_WIDTH - MARGIN_RIGHT - 50, footer_y, f"Page {self.page_number}", font="F2", size=7, color=(0.45, 0.50, 0.58))
 
     def ensure_space(self, height: float) -> None:
@@ -330,7 +330,7 @@ class PDFReporter:
         canvas.draw_rect(0, 0, PAGE_WIDTH, 140, fill_color=(0.06, 0.12, 0.24))
 
         # Brand header
-        canvas.draw_text(MARGIN_LEFT, 45, "ALGORZEN PTE. LTD. • SINGAPORE", font="F2", size=9, color=(0.40, 0.65, 0.95))
+        canvas.draw_text(MARGIN_LEFT, 45, "ORVYEN • AI AGENT SECURITY & COMPLIANCE", font="F2", size=9, color=(0.40, 0.65, 0.95))
         canvas.draw_text(MARGIN_LEFT, 78, "ORVYEN AGENTIC", font="F2", size=26, color=(1.0, 1.0, 1.0))
         canvas.draw_text(MARGIN_LEFT, 102, "AI Agent Security & Regulatory Compliance Audit Report", font="F1", size=13, color=(0.80, 0.85, 0.92))
 
@@ -408,7 +408,7 @@ class PDFReporter:
 
         # Cover page footer
         canvas.draw_line(MARGIN_LEFT, 770, MARGIN_LEFT + CONTENT_WIDTH, 770, color=(0.85, 0.88, 0.92))
-        canvas.draw_text(MARGIN_LEFT, 785, "CONFIDENTIAL • PREPARED BY ALGORZEN PTE. LTD. • ORVYEN.DEV", font="F2", size=8, color=(0.45, 0.50, 0.58))
+        canvas.draw_text(MARGIN_LEFT, 785, "CONFIDENTIAL • PREPARED BY ORVYEN • ORVYEN.DEV", font="F2", size=8, color=(0.45, 0.50, 0.58))
 
     @classmethod
     def _render_executive_summary(

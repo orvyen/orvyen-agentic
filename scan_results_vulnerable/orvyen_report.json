@@ -1,7 +1,7 @@
 {
   "target_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent",
   "files_scanned": 3,
-  "duration_ms": 4.73,
+  "duration_ms": 11.75,
   "summary": {
     "security_score": 0,
     "total_findings": 33,
@@ -711,17 +711,17 @@
     "$schema": "https://orvyen.ai/schemas/aibom-v1.json",
     "spec_version": "1.0.0",
     "metadata": {
-      "timestamp": "2026-10-28T10:52:09.909684+00:00",
+      "timestamp": "2026-10-28T16:46:56.734237+00:00",
       "scanner": "Orvyen Agentic Static Security Engine",
       "scanner_version": "0.3.0",
       "target_path": "C:\\Users\\3xs\\Documents\\orvyen\\tests\\fixtures\\vulnerable_agent",
       "files_scanned": 3,
       "security_score": 0,
       "frameworks": [
-        "langgraph",
         "crewai",
         "mcp",
-        "langchain"
+        "langchain",
+        "langgraph"
       ]
     },
     "agents": [

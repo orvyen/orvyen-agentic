@@ -1,10 +1,10 @@
 # Agent Bill of Materials (AIBOM)
 
 **Target System**: `C:\Users\3xs\Documents\orvyen\tests\fixtures\secure_agent`  
-**Generated**: 2026-10-28T10:26:15.145750+00:00  
+**Generated**: 2026-10-28T16:46:56.448535+00:00  
 **Engine**: Orvyen Agentic Static Security Engine v0.3.0  
 **Security Score**: **100/100**  
-**Frameworks Detected**: mcp, crewai, langchain, langgraph  
+**Frameworks Detected**: langchain, mcp, langgraph, crewai  
 
 ---
 

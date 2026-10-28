@@ -55,7 +55,7 @@ class TestPDFReporter(unittest.TestCase):
         self.assertTrue(pdf_bytes.rstrip().endswith(b"%%EOF"))
 
         # Check required audit content
-        self.assertIn(b"ALGORZEN PTE. LTD.", pdf_bytes)
+        self.assertIn(b"ORVYEN", pdf_bytes)
         self.assertIn(b"ORVYEN AGENTIC", pdf_bytes)
         self.assertIn(b"AI Agent Security & Regulatory Compliance Audit Report", pdf_bytes)
         self.assertIn(b"EXECUTIVE POSTURE SCORE", pdf_bytes)

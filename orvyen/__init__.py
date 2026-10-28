@@ -4,4 +4,4 @@ Purpose-built for LangChain, LangGraph, CrewAI, and Model Context Protocol (MCP)
 """
 
 __version__ = "0.3.0"
-__author__ = "Algorzen Pte. Ltd."
+__author__ = "Orvyen"
