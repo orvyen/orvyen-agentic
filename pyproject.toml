@@ -48,9 +48,9 @@ pdf = ["reportlab>=4.0.0"]
 orvyen-agentic = "orvyen.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/algorzen/orvyen-agentic"
-Documentation = "https://github.com/algorzen/orvyen-agentic#readme"
-Repository = "https://github.com/algorzen/orvyen-agentic.git"
+Homepage = "https://github.com/orvyen/orvyen-agentic"
+Documentation = "https://github.com/orvyen/orvyen-agentic#readme"
+Repository = "https://github.com/orvyen/orvyen-agentic.git"
 
 [tool.setuptools.packages.find]
 include = ["orvyen*"]

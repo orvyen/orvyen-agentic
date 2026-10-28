@@ -18,10 +18,10 @@
   ],
   "author": "Algorzen Pte. Ltd. <singh.ojas.555@gmail.com>",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/algorzen/orvyen-agentic",
+  "homepage": "https://github.com/orvyen/orvyen-agentic",
   "repository": {
     "type": "git",
-    "url": "https://github.com/algorzen/orvyen-agentic.git"
+    "url": "https://github.com/orvyen/orvyen-agentic.git"
   },
   "bin": {
     "orvyen-agentic": "./bin/orvyen-agentic.js"

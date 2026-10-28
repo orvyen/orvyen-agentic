@@ -6,8 +6,8 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![PyPI version](https://img.shields.io/pypi/v/orvyen-agentic.svg?color=blue)](https://pypi.org/project/orvyen-agentic/)
 [![npm version](https://img.shields.io/npm/v/orvyen-agentic.svg?color=red)](https://www.npmjs.com/package/orvyen-agentic)
-[![tests](https://img.shields.io/badge/tests-22%2F22-brightgreen.svg)](https://github.com/algorzen/orvyen-agentic)
-[![time](https://img.shields.io/badge/time-7.1ms-success.svg)](https://github.com/algorzen/orvyen-agentic)
+[![tests](https://img.shields.io/badge/tests-22%2F22-brightgreen.svg)](https://github.com/orvyen/orvyen-agentic)
+[![time](https://img.shields.io/badge/time-7.1ms-success.svg)](https://github.com/orvyen/orvyen-agentic)
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![OWASP LLM Top 10](https://img.shields.io/badge/OWASP-LLM_Top_10-orange)](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
 [![IMDA Governance](https://img.shields.io/badge/Singapore-IMDA_Agentic_AI_(May_2026)-green)](https://www.imda.gov.sg/)
@@ -51,7 +51,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/algorzen/orvyen-agentic.git
+git clone https://github.com/orvyen/orvyen-agentic.git
 cd orvyen-agentic
 
 # Install locally via pip
