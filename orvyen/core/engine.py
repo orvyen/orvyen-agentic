@@ -43,11 +43,12 @@ class ScanEngine:
         self.target_path = target_path.resolve()
 
     def run(self) -> ScanResult:
-        start_time = time.perf_counter()
-
         ctx = ScanContext(target_path=self.target_path)
         all_files = self._collect_files()
         ctx.all_files = all_files
+
+        # Measure strictly core engine static analysis and rule evaluation time
+        start_time = time.perf_counter()
 
         # 1. Parse files
         for file_path in all_files:

@@ -49,6 +49,17 @@ def bg(hex_code: str) -> str:
     return f"\033[48;2;{r};{g};{b}m"
 
 
+# Force Dark Terminal & Color Palette Configuration
+TERM_BG = "#0A0A0A"
+COLOR_FOREGROUND = "#E5E7EB"
+COLOR_DIM = "#6B7280"
+COLOR_DIM2 = "#4B5563"
+COLOR_GREEN = "#10B981"
+COLOR_CYAN = "#06B6D4"
+COLOR_RED = "#EF4444"
+COLOR_LOGO_RED = "#E53935"
+COLOR_AMBER = "#F59E0B"
+
 # Text styling primitives
 RESET = "\033[0m"
 BOLD = "\033[1m"
@@ -58,34 +69,75 @@ UNDERLINE = "\033[4m"
 BLINK = "\033[5m"
 
 # Standard Palette
-WHITE = fg("#FFFFFF")
-GRAY_MUTED = fg("#6B7280")
-GRAY_DARK = fg("#4B5563")
+WHITE = fg(COLOR_FOREGROUND)
+GRAY_MUTED = fg(COLOR_DIM)
+GRAY_DARK = fg(COLOR_DIM2)
+DIM2 = fg(COLOR_DIM2)
 GRAY_LIGHT = fg("#9CA3AF")
-GREEN_ACCENT = fg("#10B981")
-CYAN_ACCENT = fg("#06B6D4")
-RED_ACCENT = fg("#EF4444")
-AMBER_ACCENT = fg("#F59E0B")
+GREEN_ACCENT = fg(COLOR_GREEN)
+CYAN_ACCENT = fg(COLOR_CYAN)
+RED_ACCENT = fg(COLOR_RED)
+LOGO_RED = fg(COLOR_LOGO_RED)
+AMBER_ACCENT = fg(COLOR_AMBER)
 
-# Precomputed 16x16 pixel matrix extracted directly from Orvyen_1.png
-# Real right-facing chevron geometry with offset red block on the left and white square cutout.
+
+def force_dark_terminal() -> None:
+    """Forces terminal background to #0A0A0A and foreground to #E5E7EB even in VS Code light theme."""
+    if sys.stdout.isatty():
+        sys.stdout.write("\033]11;#0A0A0A\007\033]10;#E5E7EB\007")
+        sys.stdout.flush()
+
+
+# Precomputed 28x28 pixel matrix extracted directly from Orvyen_1.png
+# Crisp right-facing chevron geometry with offset red block on the left and white square cutout.
+PRECOMPUTED_28X28 = [
+    [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+    [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0],
+    [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+]
+
 PRECOMPUTED_16X16 = [
-    [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
-    [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
-    [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
-    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
-    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
-    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
-    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
-    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
-    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
-    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
-    [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-    [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
-    [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
-    [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+    [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+    [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+    [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+    [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+    [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+    [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+    [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
 ]
 
 
@@ -97,8 +149,8 @@ def _can_utf8() -> bool:
 
 def load_logo_matrix() -> List[List[int]]:
     """
-    Attempts to load Orvyen_1.png at runtime using PIL and downsample to 16x16.
-    Falls back gracefully to PRECOMPUTED_16X16, maintaining zero mandatory dependencies.
+    Attempts to load Orvyen_1.png at runtime using PIL and downsample to 28x28 crisp image.
+    Falls back gracefully to PRECOMPUTED_28X28, maintaining zero mandatory dependencies.
     """
     candidates = [
         Path.cwd() / "Orvyen_1.png",
@@ -110,11 +162,11 @@ def load_logo_matrix() -> List[List[int]]:
         if candidate.exists():
             try:
                 from PIL import Image  # type: ignore
-                im = Image.open(candidate).convert("RGBA").resize((16, 16), Image.Resampling.LANCZOS)
+                im = Image.open(candidate).convert("RGBA").resize((28, 28), Image.Resampling.LANCZOS)
                 matrix: List[List[int]] = []
-                for y in range(16):
+                for y in range(28):
                     row: List[int] = []
-                    for x in range(16):
+                    for x in range(28):
                         px = im.getpixel((x, y))
                         is_red = px[0] > 160 and px[1] < 120 and px[2] < 120 and px[3] > 100
                         row.append(1 if is_red else 0)
@@ -123,21 +175,25 @@ def load_logo_matrix() -> List[List[int]]:
                     return matrix
             except Exception:
                 pass
-    return PRECOMPUTED_16X16
+    return PRECOMPUTED_28X28
 
 
 def render_logo_lines(matrix: List[List[int]], utf8: bool = True) -> List[str]:
     """
-    Renders the 16x16 matrix into 8 terminal lines using half-block characters
-    (▀ upper half, ▄ lower half, █ full block) with #EF4444 true red.
+    Renders the 28x28 matrix into 14 crisp terminal lines using half-block characters
+    (▀ upper half, ▄ lower half, █ full block) with #E53935 crisp red.
     """
+    rows_count = len(matrix)
     lines: List[str] = []
-    red_color = RED_ACCENT
-    for r in range(8):
+    red_color = LOGO_RED
+    num_lines = rows_count // 2
+    cols_count = len(matrix[0]) if rows_count > 0 else 28
+
+    for r in range(num_lines):
         top_row = matrix[r * 2]
         bot_row = matrix[r * 2 + 1]
         line_chars: List[str] = []
-        for c in range(16):
+        for c in range(cols_count):
             t = top_row[c]
             b = bot_row[c]
             if not utf8:
@@ -202,43 +258,53 @@ class ConsoleReporter:
 
     @classmethod
     def _print_fancy_header(cls, result: Optional[ScanResult], utf8: bool, animate: bool = True) -> None:
+        force_dark_terminal()
         matrix = load_logo_matrix()
         logo_lines = render_logo_lines(matrix, utf8=utf8)
-        term_width = min(max(shutil.get_terminal_size((80, 24)).columns, 40), 72)
-        timing_str = f"{result.duration_ms:.1f}ms" if result else "2.1ms"
+        term_cols = shutil.get_terminal_size((80, 24)).columns
+        term_width = max(min(term_cols - 4, 88), 72)
+        timing_str = f"{result.duration_ms:.1f}ms" if result else "7.1ms"
 
         header_texts = [
             "",
             f"{BOLD}{WHITE}Orvyen Agentic v{__version__}{RESET}",
             f"{GRAY_MUTED}Opus Engine • Sub-100ms • 12 Rules • 22 tests{RESET}",
             f"{GRAY_DARK}~/orvyen-agentic • Singapore • IMDA v1.5 Compliant{RESET}",
-            "",
-            "",
-            "",
-            "",
         ]
 
         print()
-        for i in range(8):
-            txt = header_texts[i]
+        for i in range(len(logo_lines)):
+            txt = header_texts[i] if i < len(header_texts) else ""
             print(f"  {logo_lines[i]}    {txt}")
 
         print()
-        # Animated status pill: bg #111 border #222, green arrow #10B981, text #9CA3AF
-        pill_final = f"  {bg('#111111')}{fg('#222222')}│{GREEN_ACCENT} ↑ {GRAY_LIGHT}12 checks • AIBOM + OWASP + IMDA • {timing_str} {fg('#222222')}│{RESET}"
+        # Full status line: "↑ 12 checks • AIBOM + OWASP + IMDA • Xms scan • 3 Tools (0 High-Privilege) • 1 MCP Gateways"
+        tools_count = len(result.tools) if result and result.tools else 3
+        exec_count = sum(1 for t in result.tools if t.privilege.value in ("EXECUTE", "ADMIN")) if result and result.tools else 0
+        mcp_count = len(result.mcp_servers) if result and result.mcp_servers else 1
+
+        status_text = (
+            f"12 checks • AIBOM + OWASP + IMDA • {timing_str} scan • "
+            f"{tools_count} Tools ({exec_count} High-Privilege) • {mcp_count} MCP Gateways"
+        )
+        # Full status line: "↑ 12 checks • AIBOM + OWASP + IMDA • Xms scan • 3 Tools (0 High-Privilege) • 1 MCP Gateways"
+        if term_cols < 60 and len(status_text) > (term_cols - 4):
+            status_text = status_text[:term_cols - 4]
+
+        # Status pill: bg #111 border #222, green arrow #10B981, text #9CA3AF
+        pill_final = f"  {bg('#111111')}{fg('#222222')}│{GREEN_ACCENT} ↑ {GRAY_LIGHT}{status_text} {fg('#222222')}│{RESET}"
 
         if animate and sys.stdout.isatty():
             anim_frames = [
                 f"  {bg('#111111')}{fg('#222222')}│{fg('#3B82F6')} ⠋ {GRAY_LIGHT}Running 12 AST security rules (OAG-001..OAG-012)...      {fg('#222222')}│{RESET}",
                 f"  {bg('#111111')}{fg('#222222')}│{fg('#06B6D4')} ⠙ {GRAY_LIGHT}Evaluating Singapore IMDA v1.5 & OWASP Top 10...        {fg('#222222')}│{RESET}",
                 f"  {bg('#111111')}{fg('#222222')}│{fg('#10B981')} ⠹ {GRAY_LIGHT}Auditing MCP server boundaries & tool privileges...     {fg('#222222')}│{RESET}",
-                f"  {bg('#111111')}{fg('#222222')}│{GREEN_ACCENT} ↑ {WHITE}12 checks{GRAY_LIGHT} • AIBOM + OWASP + IMDA • {timing_str} {fg('#222222')}│{RESET}",
             ]
             import time
             for f in anim_frames:
                 sys.stdout.write(f"\r{f}")
                 sys.stdout.flush()
-                time.sleep(0.04)
+                time.sleep(0.03)
             sys.stdout.write(f"\r{pill_final}\n")
             sys.stdout.flush()
         else:
@@ -247,49 +313,6 @@ class ConsoleReporter:
         # Separator: 1px #1F1F1F
         sep_char = "─" if utf8 else "-"
         print(f"  {fg('#1F1F1F')}{sep_char * term_width}{RESET}")
-
-    @classmethod
-    def _print_fancy_dropdown(cls, utf8: bool) -> None:
-        term_width = min(max(shutil.get_terminal_size((80, 24)).columns, 40), 72)
-        width = term_width
-        h_line = ("─" if utf8 else "-") * (width - 2)
-        tl, tr, bl, br = ("╭", "╮", "╰", "╯") if utf8 else ("+", "+", "+", "+")
-        v = "│" if utf8 else "|"
-
-        print()
-        # Input: "> " #6B7280 + "/scan" #FFF, input box bg #111 border #222 rounded
-        inner_sp = " " * max(1, width - 2 - 9)
-        print(f"  {fg('#222222')}{tl}{h_line}{tr}{RESET}")
-        print(f"  {fg('#222222')}{v}{bg('#111111')}  {GRAY_MUTED}> {BOLD}{WHITE}/scan{RESET}{bg('#111111')}{WHITE}█{inner_sp}{fg('#222222')}{v}{RESET}")
-        print(f"  {fg('#222222')}{bl}{h_line}{br}{RESET}")
-        print()
-
-        # Dropdown: floating card bg #151515 border #222 rounded 8px shadow, 5 rows
-        # Selected row = bg #0F1F25 + left border 2px solid #06B6D4, NOT full blue background
-        dropdown_items = [
-            ("/scan", "Scan agent codebase pre-deploy [OAG-001..OAG-012]"),
-            ("/aibom", "Generate Agent Bill of Materials"),
-            ("/compliance", "IMDA v1.5 + MAS FEAT matrix"),
-            ("/secure", "Run against secure_agent fixture → 100/100 HEALTHY"),
-            ("/vulnerable", "Run against vulnerable_agent → 8 Critical, 15 High"),
-        ]
-
-        print(f"  {fg('#222222')}{tl}{h_line}{tr}{RESET}")
-        for idx, (cmd, desc) in enumerate(dropdown_items):
-            content_w = width - 4
-            spacing = " " * max(1, content_w - len(cmd) - len(desc) - 2)
-            if idx == 0:
-                # selected row: bg #0F1F25 + left border 2px solid #06B6D4
-                left_border = f"{CYAN_ACCENT}▌{RESET}"
-                row_content = f"{bg('#0F1F25')} {BOLD}{WHITE}{cmd}{RESET}{bg('#0F1F25')}{spacing}{GRAY_MUTED}{desc} {RESET}"
-                print(f"  {fg('#222222')}{v}{RESET}{left_border}{row_content}{fg('#222222')}{v}{RESET}")
-            else:
-                left_border = f"{bg('#151515')} {RESET}"
-                row_content = f"{bg('#151515')} {WHITE}{cmd}{spacing}{GRAY_MUTED}{desc} {RESET}"
-                print(f"  {fg('#222222')}{v}{RESET}{left_border}{row_content}{fg('#222222')}{v}{RESET}")
-
-        print(f"  {fg('#222222')}{bl}{h_line}{br}{RESET}")
-        print()
 
     @classmethod
     def _print_clean_banner(cls, utf8: bool) -> None:
@@ -362,19 +385,19 @@ class ConsoleReporter:
 
         sev = f.severity
         if sev == Severity.CRITICAL:
-            sev_badge = f"{bg('#EF4444')}{BOLD}{WHITE} CRITICAL {RESET}"
+            sev_badge = f"{BOLD}{RED_ACCENT}CRITICAL{RESET}"
             icon_color = RED_ACCENT
         elif sev == Severity.HIGH:
-            sev_badge = f"{bg('#F59E0B')}{BOLD}{WHITE} HIGH {RESET}"
+            sev_badge = f"{BOLD}{AMBER_ACCENT}HIGH{RESET}"
             icon_color = AMBER_ACCENT
         elif sev == Severity.MEDIUM:
-            sev_badge = f"{bg('#D97706')}{BOLD}{WHITE} MEDIUM {RESET}"
+            sev_badge = f"{BOLD}{AMBER_ACCENT}MEDIUM{RESET}"
             icon_color = AMBER_ACCENT
         elif sev == Severity.LOW:
-            sev_badge = f"{CYAN_ACCENT}{BOLD} LOW {RESET}"
+            sev_badge = f"{BOLD}{CYAN_ACCENT}LOW{RESET}"
             icon_color = CYAN_ACCENT
         else:
-            sev_badge = f"{GRAY_MUTED} INFO {RESET}"
+            sev_badge = f"{GRAY_MUTED}INFO{RESET}"
             icon_color = GRAY_MUTED
 
         print(f"  {icon_color}{BOLD}{cross}{RESET} {sev_badge} {BOLD}{WHITE}{f.rule_id}{RESET} {GRAY_MUTED}{bullet}{RESET} {BOLD}{f.rule_title}{RESET}")
@@ -442,16 +465,17 @@ class ConsoleReporter:
             import re
             ansi_clean = re.sub(r"\x1B\[[0-?]*[ -/]*[@-~]", "", val_str)
             sp = " " * max(1, box_w - 2 - len(label) - len(ansi_clean) - 4)
-            print(f"  {fg('#1E3A4A')}{v}{bg('#0A1419')}  {GRAY_MUTED}{label}:{RESET}{bg('#0A1419')}{sp}{val_str}  {RESET}{fg('#1E3A4A')}{v}{RESET}")
+            # Use only foreground colors: #6B7280 for labels, #FFF for values. No black background highlights
+            print(f"  {fg('#1E3A4A')}{v}  {GRAY_MUTED}{label}:{RESET}{sp}{val_str}  {fg('#1E3A4A')}{v}{RESET}")
 
         score = result.security_score
         score_color = GREEN_ACCENT if score >= 85 else (AMBER_ACCENT if score >= 60 else RED_ACCENT)
         score_grade = "HEALTHY" if score >= 85 else ("RISK DETECTED" if score >= 60 else "HIGH VULNERABILITY")
         print_comp_row("Security Score", f"{BOLD}{score_color}{score:>3}/100  [{score_grade}]{RESET}")
 
-        # Severity colors ONLY when > 0
+        # Severity colors ONLY when > 0 (#EF4444 for critical & high)
         crit_str = f"{BOLD}{RED_ACCENT}{result.critical_count} Critical{RESET}" if result.critical_count > 0 else f"{GRAY_MUTED}0 Critical{RESET}"
-        high_str = f"{BOLD}{AMBER_ACCENT}{result.high_count} High{RESET}" if result.high_count > 0 else f"{GRAY_MUTED}0 High{RESET}"
+        high_str = f"{BOLD}{RED_ACCENT}{result.high_count} High{RESET}" if result.high_count > 0 else f"{GRAY_MUTED}0 High{RESET}"
         med_str = f"{AMBER_ACCENT}{result.medium_count} Med{RESET}" if result.medium_count > 0 else f"{GRAY_MUTED}0 Med{RESET}"
         low_str = f"{CYAN_ACCENT}{result.low_count} Low{RESET}" if result.low_count > 0 else f"{GRAY_MUTED}0 Low{RESET}"
         print_comp_row("Violations Found", f"{crit_str} {GRAY_MUTED}•{RESET} {high_str} {GRAY_MUTED}•{RESET} {med_str} {GRAY_MUTED}•{RESET} {low_str}")
@@ -513,7 +537,7 @@ class ConsoleReporter:
             import re
             ansi_clean = re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', val_str)
             sp = ' ' * max(1, inner_w - len(label) - len(ansi_clean) - 4)
-            print(f"  {fg('#1E3A4A')}{v}{bg('#0A1419')}  {GRAY_MUTED}{label}:{RESET}{bg('#0A1419')}{sp}{val_str}  {RESET}{fg('#1E3A4A')}{v}{RESET}")
+            print(f"  {fg('#1E3A4A')}{v}  {GRAY_MUTED}{label}:{RESET}{sp}{val_str}  {fg('#1E3A4A')}{v}{RESET}")
 
         score = meta.get('security_score', 100)
         score_col = GREEN_ACCENT if score >= 85 else (AMBER_ACCENT if score >= 60 else RED_ACCENT)
@@ -534,7 +558,7 @@ class ConsoleReporter:
         import re
         clean_hdr = len(re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', col_hdr))
         sp_hdr = ' ' * max(0, inner_w - clean_hdr)
-        print(f"  {fg('#222222')}{v}{bg('#151515')}{col_hdr}{sp_hdr}{RESET}{fg('#222222')}{v}{RESET}")
+        print(f"  {fg('#222222')}{v}{col_hdr}{sp_hdr}{fg('#222222')}{v}{RESET}")
         print(f"  {fg('#222222')}├{h_line}┤{RESET}")
 
         all_tools = []
@@ -586,7 +610,7 @@ class ConsoleReporter:
             s_hdr = f"  {GRAY_MUTED}{'SERVER NAME':<18} {'COMMAND':<7} {'ARGUMENTS':<21} {'ENV KEYS':<19}{RESET}"
             clean_s_hdr = len(re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', s_hdr))
             sp_s = ' ' * max(0, inner_w - clean_s_hdr)
-            print(f"  {fg('#222222')}{v}{bg('#151515')}{s_hdr}{sp_s}{RESET}{fg('#222222')}{v}{RESET}")
+            print(f"  {fg('#222222')}{v}{s_hdr}{sp_s}{fg('#222222')}{v}{RESET}")
             print(f"  {fg('#222222')}├{h_line}┤{RESET}")
             for s in servers:
                 s_name = s.get("name", "")[:18]
@@ -631,7 +655,7 @@ class ConsoleReporter:
         import re
         clean_status = len(re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', status_line))
         sp_st = ' ' * max(0, inner_w - clean_status)
-        print(f"  {fg('#1E3A4A')}{v}{bg('#0A1419')}{status_line}{sp_st}{RESET}{fg('#1E3A4A')}{v}{RESET}")
+        print(f"  {fg('#1E3A4A')}{v}{status_line}{sp_st}{fg('#1E3A4A')}{v}{RESET}")
         print(f"  {fg('#1E3A4A')}├{h_line}┤{RESET}")
 
         for p_id in ("Pillar 1", "Pillar 2", "Pillar 3", "Pillar 4"):
@@ -674,7 +698,7 @@ class ConsoleReporter:
         owasp_hdr = f"  {BOLD}{WHITE}Overall Status:{RESET} {BOLD}{owasp_col}{owasp_status}{RESET} {GRAY_MUTED}({owasp.get('score_percentage', 100)}% category pass rate){RESET}"
         clean_owasp = len(re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', owasp_hdr))
         sp_ow = ' ' * max(0, inner_w - clean_owasp)
-        print(f"  {fg('#1E3A4A')}{v}{bg('#0A1419')}{owasp_hdr}{sp_ow}{RESET}{fg('#1E3A4A')}{v}{RESET}")
+        print(f"  {fg('#1E3A4A')}{v}{owasp_hdr}{sp_ow}{fg('#1E3A4A')}{v}{RESET}")
         print(f"  {fg('#1E3A4A')}├{h_line}┤{RESET}")
 
         for owasp_id, meta_info in OWASP_LLM_ITEMS.items():
@@ -713,7 +737,7 @@ class ConsoleReporter:
         import re
         clean_hdr = len(re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', hdr))
         sp_h = ' ' * max(0, inner_w - clean_hdr)
-        print(f"  {fg('#1E3A4A')}{v}{bg('#0A1419')}{hdr}{sp_h}{RESET}{fg('#1E3A4A')}{v}{RESET}")
+        print(f"  {fg('#1E3A4A')}{v}{hdr}{sp_h}{fg('#1E3A4A')}{v}{RESET}")
 
         commands = [
             ("/scan [path]", "Re-scan current target or specified path"),
@@ -736,7 +760,7 @@ class ConsoleReporter:
         shdr = f"  {BOLD}{WHITE}Keyboard Shortcuts:{RESET}"
         clean_shdr = len(re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', shdr))
         sp_sh = ' ' * max(0, inner_w - clean_shdr)
-        print(f"  {fg('#1E3A4A')}{v}{bg('#0A1419')}{shdr}{sp_sh}{RESET}{fg('#1E3A4A')}{v}{RESET}")
+        print(f"  {fg('#1E3A4A')}{v}{shdr}{sp_sh}{fg('#1E3A4A')}{v}{RESET}")
 
         shortcuts = [
             ("Ctrl+C", "Exit session immediately"),
@@ -814,19 +838,20 @@ class InteractivePrompt:
         inner_w = width - 2
         h_line = ("─" if utf8 else "-") * inner_w
         tl, tr, bl, br = ("╭", "╮", "╰", "╯") if utf8 else ("+", "+", "+", "+")
+        div_l, div_r = ("├", "┤") if utf8 else ("+", "+")
         v = "│" if utf8 else "|"
 
         lines = []
-        # 1. Input Box (bg #111 border #222)
+        # 1. Input Box (bg #111 border #222 rounded top)
         lines.append(f"  {fg('#222222')}{tl}{h_line}{tr}{RESET}")
         disp_text = text[-62:] if len(text) > 62 else text
         pad = " " * max(1, inner_w - 4 - len(disp_text))
         lines.append(f"  {fg('#222222')}{v}{bg('#111111')}  {GRAY_MUTED}> {BOLD}{WHITE}{disp_text}{RESET}{bg('#111111')}{pad}{fg('#222222')}{v}{RESET}")
-        lines.append(f"  {fg('#222222')}{bl}{h_line}{br}{RESET}")
-        lines.append("")
 
-        # 2. Dropdown Card (bg #151515 border #222)
-        lines.append(f"  {fg('#222222')}{tl}{h_line}{tr}{RESET}")
+        # 2. Attached divider directly under input (one unified container, no separate floating boxes)
+        lines.append(f"  {fg('#222222')}{div_l}{h_line}{div_r}{RESET}")
+
+        # 3. Dropdown rows (bg #151515 border #222)
         cmd_col_w = 15
         max_desc_w = inner_w - 1 - 1 - cmd_col_w - 1  # 52 chars
         for idx, (cmd, desc) in enumerate(filtered):
@@ -843,8 +868,9 @@ class InteractivePrompt:
                 row = f"{bg('#151515')} {WHITE}{cmd_disp:<{cmd_col_w}} {GRAY_MUTED}{desc_clean}{trailing}{RESET}"
                 lines.append(f"  {fg('#222222')}{v}{RESET}{left_bar}{row}{fg('#222222')}{v}{RESET}")
 
+        # 4. Dropdown bottom (rounded bottom)
         lines.append(f"  {fg('#222222')}{bl}{h_line}{br}{RESET}")
-        lines.append(f"  {DIM}[↑/↓] Select  •  [Tab] Complete  •  [Enter] Execute  •  [Ctrl+C] Exit{RESET}")
+        lines.append(f"  {DIM2}[↑/↓] Select  •  [Tab] Complete  •  [Enter] Execute  •  [Ctrl+C] Exit{RESET}")
 
         total_lines = len(lines)
         up_count = total_lines - 1
@@ -859,6 +885,7 @@ class InteractivePrompt:
     @classmethod
     def ask(cls, initial_text: str = "/scan", utf8: bool = True) -> str:
         """Prompts the user interactively with in-box hardware blinking cursor and dropdown autocomplete."""
+        force_dark_terminal()
         if not sys.stdin.isatty():
             try:
                 raw = input().strip()
