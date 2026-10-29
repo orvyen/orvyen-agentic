@@ -630,7 +630,7 @@ class ConsoleReporter:
             print(f"  {fg('#222222')}{bl}{h_line}{br}{RESET}")
             print()
 
-        print(f"  {GRAY_DARK}Tier: Orvyen Agentic Core  •  Full IMDA/OWASP clause mapping: {CYAN_ACCENT}orvyen.dev/pricing{RESET}")
+        print(f"  {GRAY_DARK}Tier: Orvyen Agentic Core  •  Full IMDA/OWASP clause mapping: {CYAN_ACCENT}orvyen.com/pricing{RESET}")
         print()
 
     @classmethod
@@ -876,15 +876,16 @@ class InteractivePrompt:
         up_count = total_lines - 1
         col_count = 7 + len(disp_text)
 
-        # Output widget with cursor hidden, then reposition native cursor inside input box and show it
-        output_str = "\033[?25l" + "\n".join(lines) + f"\n\033[{up_count}A\r\033[{col_count}C\033[?25h"
+        # Output widget with native cursor hidden, position at input line, and draw crisp typing bar
+        bar_ch = f"{WHITE}│{RESET}" if utf8 else f"{WHITE}|{RESET}"
+        output_str = "\033[?25l" + "\n".join(lines) + f"\n\033[{up_count}A\r\033[{col_count}C{bar_ch}\033[1D"
         sys.stdout.write(output_str)
         sys.stdout.flush()
         return total_lines
 
     @classmethod
     def ask(cls, initial_text: str = "/scan", utf8: bool = True) -> str:
-        """Prompts the user interactively with in-box hardware blinking cursor and dropdown autocomplete."""
+        """Prompts the user interactively with dynamic dropdown autocomplete and a live blinking typing bar."""
         force_dark_terminal()
         if not sys.stdin.isatty():
             try:
@@ -903,9 +904,13 @@ class InteractivePrompt:
         text = initial_text
         selected_idx = 0
         is_first_render = True
+        cursor_visible = True
+        last_blink = time.time()
 
         def redraw():
-            nonlocal is_first_render
+            nonlocal is_first_render, cursor_visible, last_blink
+            cursor_visible = True
+            last_blink = time.time()
             if not is_first_render:
                 sys.stdout.write("\033[?25l\033[1A\r\033[J")
             else:
@@ -913,9 +918,21 @@ class InteractivePrompt:
             cls.render_widget(text, selected_idx, utf8=utf8)
 
         def clear_and_restore():
+            nonlocal is_first_render
             if not is_first_render:
-                sys.stdout.write("\033[?25l\033[1A\r\033[J\033[?25h")
+                sys.stdout.write("\033[?25l\033[1A\r\033[J\033[0 q\033[?25h")
                 sys.stdout.flush()
+
+        old_set = None
+        fd = None
+        if not is_windows:
+            try:
+                import tty, termios
+                fd = sys.stdin.fileno()
+                old_set = termios.tcgetattr(fd)
+                tty.setcbreak(fd)
+            except Exception:
+                old_set = None
 
         redraw()
 
@@ -923,37 +940,37 @@ class InteractivePrompt:
             while True:
                 key = None
                 if is_windows:
-                    ch = msvcrt.getwch()
-                    if ch in ('\x00', '\xe0'):
-                        code = msvcrt.getwch()
-                        if code == 'H': key = 'UP'
-                        elif code == 'P': key = 'DOWN'
-                        elif code == 'K': key = 'LEFT'
-                        elif code == 'M': key = 'RIGHT'
-                    elif ch in ('\r', '\n'):
-                        key = 'ENTER'
-                    elif ch == '\t':
-                        key = 'TAB'
-                    elif ch in ('\x08', '\x7f'):
-                        key = 'BACKSPACE'
-                    elif ch == '\x03':
-                        key = 'CTRL_C'
-                    elif ch in ('\x04', '\x1a'):
-                        key = 'CTRL_D'
-                    elif ch == '\x1b':
-                        key = 'ESC'
-                    elif ch.isprintable():
-                        key = ch
+                    if msvcrt.kbhit():
+                        ch = msvcrt.getwch()
+                        if ch in ('\x00', '\xe0'):
+                            code = msvcrt.getwch()
+                            if code == 'H': key = 'UP'
+                            elif code == 'P': key = 'DOWN'
+                            elif code == 'K': key = 'LEFT'
+                            elif code == 'M': key = 'RIGHT'
+                        elif ch in ('\r', '\n'):
+                            key = 'ENTER'
+                        elif ch == '\t':
+                            key = 'TAB'
+                        elif ch in ('\x08', '\x7f'):
+                            key = 'BACKSPACE'
+                        elif ch == '\x03':
+                            key = 'CTRL_C'
+                        elif ch in ('\x04', '\x1a'):
+                            key = 'CTRL_D'
+                        elif ch == '\x1b':
+                            key = 'ESC'
+                        elif ch.isprintable():
+                            key = ch
+                    else:
+                        time.sleep(0.02)
                 else:
-                    import tty, termios
-                    fd = sys.stdin.fileno()
-                    old_set = termios.tcgetattr(fd)
-                    try:
-                        tty.setraw(fd)
+                    import select
+                    r, _, _ = select.select([sys.stdin], [], [], 0.02)
+                    if r:
                         ch = sys.stdin.read(1)
                         if ch == '\x1b':
-                            import select
-                            r2, _, _ = select.select([sys.stdin], [], [], 0.05)
+                            r2, _, _ = select.select([sys.stdin], [], [], 0.03)
                             if r2:
                                 seq = sys.stdin.read(2)
                                 if seq == '[A': key = 'UP'
@@ -964,13 +981,21 @@ class InteractivePrompt:
                         elif ch == '\t': key = 'TAB'
                         elif ch in ('\x7f', '\x08'): key = 'BACKSPACE'
                         elif ch == '\x03': key = 'CTRL_C'
-                        elif ch == '\x04': key = 'CTRL_D'
+                        elif ch in ('\x04', '\x1a'): key = 'CTRL_D'
                         elif ch.isprintable(): key = ch
-                    finally:
-                        termios.tcsetattr(fd, termios.TCSADRAIN, old_set)
 
                 if key is None:
+                    now = time.time()
+                    if now - last_blink >= 0.5:
+                        last_blink = now
+                        cursor_visible = not cursor_visible
+                        ch = (f"{WHITE}│{RESET}" if utf8 else f"{WHITE}|{RESET}") if cursor_visible else f"{bg('#111111')} {RESET}"
+                        sys.stdout.write(f"\033[?25l{ch}\033[1D")
+                        sys.stdout.flush()
                     continue
+
+                cursor_visible = True
+                last_blink = time.time()
 
                 if key == 'CTRL_C':
                     clear_and_restore()
@@ -1037,5 +1062,12 @@ class InteractivePrompt:
         except (KeyboardInterrupt, EOFError):
             clear_and_restore()
             raise
+        finally:
+            if not is_windows and old_set is not None and fd is not None:
+                try:
+                    import termios
+                    termios.tcsetattr(fd, termios.TCSADRAIN, old_set)
+                except Exception:
+                    pass
 
 

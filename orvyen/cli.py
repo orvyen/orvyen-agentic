@@ -115,7 +115,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--license-key",
         default=None,
         metavar="KEY",
-        help="Orvyen Pro license key (unlocks AIBOM Markdown clause mapping). Get one at orvyen.dev/pricing",
+        help="Orvyen Pro license key (unlocks AIBOM Markdown clause mapping). Get one at orvyen.com/pricing",
     )
 
     return parser
@@ -355,7 +355,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.format == "pdf":
         license_key = getattr(args, "license_key", None)
         if not is_valid_license(license_key):
-            print("Requires license: orvyen.dev/pricing", file=sys.stderr)
+            print("Requires license: orvyen.com/pricing", file=sys.stderr)
             return 1
         pdf_path = out_dir / "orvyen_report.pdf"
         PDFReporter.write_to_file(result, pdf_path, license_key=license_key)
@@ -369,7 +369,7 @@ def main(argv: list[str] | None = None) -> int:
             if not args.quiet:
                 print(f"[+] PDF audit report saved to: {pdf_path}")
         elif not args.quiet:
-            print("[!] PDF audit report skipped (Requires license: orvyen.dev/pricing)")
+            print("[!] PDF audit report skipped (Requires license: orvyen.com/pricing)")
 
     # Check failure gate
     if args.fail_on != "NONE":

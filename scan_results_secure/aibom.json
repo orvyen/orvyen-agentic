@@ -1,5 +1,5 @@
 {
-  "$schema": "https://orvyen.ai/schemas/aibom-v1.json",
+  "$schema": "https://orvyen.com/schemas/aibom-v1.json",
   "spec_version": "1.0.0",
   "metadata": {
     "timestamp": "2026-10-28T16:46:56.448535+00:00",

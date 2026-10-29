@@ -111,7 +111,7 @@ class TestOrvyenScanner(unittest.TestCase):
         self.assertIn("# Agent Bill of Materials (AIBOM)", md_free)
         self.assertIn("Tool Inventory", md_free)
         # Free tier should NOT contain full compliance clause tables
-        self.assertIn("orvyen.dev/pricing", md_free)
+        self.assertIn("orvyen.com/pricing", md_free)
 
     def test_aibom_markdown_pro_with_valid_license(self):
         """Verify that a valid license key unlocks full IMDA/OWASP clause mapping in Markdown."""
@@ -133,7 +133,7 @@ class TestOrvyenScanner(unittest.TestCase):
         self.assertIn("Singapore IMDA Model AI Governance Framework", md_pro)
         self.assertIn("OWASP Top 10 for LLM Applications", md_pro)
         # Pro tier should NOT contain the upgrade prompt
-        self.assertNotIn("orvyen.dev/pricing", md_pro)
+        self.assertNotIn("orvyen.com/pricing", md_pro)
 
     def test_license_gate_validation(self):
         """Verify license gate accepts valid keys and rejects invalid/empty ones."""

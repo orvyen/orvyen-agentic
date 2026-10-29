@@ -6,7 +6,7 @@ Optional integration with reportlab if available.
 
 Gated behind license_gate.py:
 Flag --format pdf requires a valid license key, else returns:
-"Requires license: orvyen.dev/pricing"
+"Requires license: orvyen.com/pricing"
 """
 
 from __future__ import annotations
@@ -273,7 +273,7 @@ class PDFReporter:
         Requires a valid Pro license key via license_gate.py.
         """
         if not is_valid_license(license_key):
-            raise PermissionError("Requires license: orvyen.dev/pricing")
+            raise PermissionError("Requires license: orvyen.com/pricing")
 
         # Compile compliance matrices & AIBOM if not already attached
         aibom = result.aibom or AIBOMCompiler.compile(result)
@@ -408,7 +408,7 @@ class PDFReporter:
 
         # Cover page footer
         canvas.draw_line(MARGIN_LEFT, 770, MARGIN_LEFT + CONTENT_WIDTH, 770, color=(0.85, 0.88, 0.92))
-        canvas.draw_text(MARGIN_LEFT, 785, "CONFIDENTIAL • PREPARED BY ORVYEN • ORVYEN.DEV", font="F2", size=8, color=(0.45, 0.50, 0.58))
+        canvas.draw_text(MARGIN_LEFT, 785, "CONFIDENTIAL • PREPARED BY ORVYEN • ORVYEN.COM", font="F2", size=8, color=(0.45, 0.50, 0.58))
 
     @classmethod
     def _render_executive_summary(

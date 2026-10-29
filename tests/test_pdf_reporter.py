@@ -37,12 +37,12 @@ class TestPDFReporter(unittest.TestCase):
         # No license key
         with self.assertRaises(PermissionError) as ctx:
             PDFReporter.generate(result, license_key=None)
-        self.assertIn("Requires license: orvyen.dev/pricing", str(ctx.exception))
+        self.assertIn("Requires license: orvyen.com/pricing", str(ctx.exception))
 
         # Invalid license key
         with self.assertRaises(PermissionError) as ctx:
             PDFReporter.generate(result, license_key="OAG-INVALID.1234567890abcdef")
-        self.assertIn("Requires license: orvyen.dev/pricing", str(ctx.exception))
+        self.assertIn("Requires license: orvyen.com/pricing", str(ctx.exception))
 
     def test_pdf_generation_with_valid_license(self):
         """Verify audit-ready PDF document is generated with cover, summary, AIBOM, and matrices."""
@@ -102,7 +102,7 @@ class TestPDFReporter(unittest.TestCase):
 
         self.assertEqual(exit_code, 1)
         err_output = stderr_capture.getvalue()
-        self.assertIn("Requires license: orvyen.dev/pricing", err_output)
+        self.assertIn("Requires license: orvyen.com/pricing", err_output)
 
     def test_cli_pdf_format_succeeds_with_license(self):
         """Verify CLI --format pdf generates orvyen_report.pdf when valid license key is passed."""
