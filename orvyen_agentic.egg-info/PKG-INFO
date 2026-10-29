@@ -2,7 +2,7 @@ Metadata-Version: 2.4
 Name: orvyen-agentic
 Version: 0.3.0
 Summary: Static Security & Compliance Scanner for AI Agents (LangChain, LangGraph, CrewAI, MCP)
-Author-email: Orvyen <support@orvyen.dev>
+Author-email: Orvyen <support@orvyen.com>
 License: Apache-2.0 core + proprietary compliance/
 Project-URL: Homepage, https://github.com/orvyen/orvyen-agentic
 Project-URL: Documentation, https://github.com/orvyen/orvyen-agentic#readme
