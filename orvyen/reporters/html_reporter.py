@@ -61,16 +61,20 @@ class HTMLReporter:
                 p_class = f"badge-{priv}"
                 audited = '<span class="status-yes">Yes</span>' if t.get("is_audited") else '<span class="status-no">No</span>'
                 bound = '<span class="status-yes">Yes</span>' if t.get("is_bound") else '<span class="status-no">No</span>'
-                sinks = html.escape(", ".join(t.get("dangerous_sinks", [])) or "None")
+                sinks = html.escape(", ".join(t.get("dangerous_sinks") or []) or "None")
+                tool_name = html.escape(str(t.get("name") or ""))
+                tool_framework = html.escape(str(t.get("framework") or ""))
+                tool_fpath = html.escape(str(t.get("file_path") or ""))
+                tool_lno = t.get("line_number", 1)
                 tools_html.append(f"""
                 <tr>
-                    <td><code>{html.escape(t.get("name"))}</code></td>
+                    <td><code>{tool_name}</code></td>
                     <td><span class="badge {p_class}">{priv.upper()}</span></td>
-                    <td>{html.escape(t.get("framework"))}</td>
+                    <td>{tool_framework}</td>
                     <td>{audited}</td>
                     <td>{bound}</td>
                     <td><small>{sinks}</small></td>
-                    <td><small>{html.escape(t.get("file_path"))}:{t.get("line_number")}</small></td>
+                    <td><small>{tool_fpath}:{tool_lno}</small></td>
                 </tr>
                 """)
 
@@ -78,13 +82,15 @@ class HTMLReporter:
         imda_rows = []
         for p_id, p_data in imda.get("pillars", {}).items():
             badge = '<span class="badge badge-pass">COMPLIANT</span>' if p_data.get("is_compliant") else '<span class="badge badge-fail">NON-COMPLIANT</span>'
+            p_name = html.escape(str(p_data.get("name") or ""))
+            p_desc = html.escape(str(p_data.get("description") or ""))
             imda_rows.append(f"""
             <tr>
-                <td><strong>{html.escape(p_id)}</strong></td>
-                <td>{html.escape(p_data.get("name"))}</td>
+                <td><strong>{html.escape(str(p_id))}</strong></td>
+                <td>{p_name}</td>
                 <td>{badge}</td>
-                <td>{p_data.get("violation_count")}</td>
-                <td><small>{html.escape(p_data.get("description"))}</small></td>
+                <td>{p_data.get("violation_count", 0)}</td>
+                <td><small>{p_desc}</small></td>
             </tr>
             """)
 
@@ -92,13 +98,15 @@ class HTMLReporter:
         owasp_rows = []
         for o_id, o_data in owasp.get("items", {}).items():
             badge = '<span class="badge badge-pass">PASS</span>' if o_data.get("is_pass") else '<span class="badge badge-fail">FAIL</span>'
+            o_title = html.escape(str(o_data.get("title") or ""))
+            o_desc = html.escape(str(o_data.get("description") or ""))
             owasp_rows.append(f"""
             <tr>
-                <td><strong>{html.escape(o_id)}</strong></td>
-                <td>{html.escape(o_data.get("title"))}</td>
+                <td><strong>{html.escape(str(o_id))}</strong></td>
+                <td>{o_title}</td>
                 <td>{badge}</td>
-                <td>{o_data.get("violation_count")}</td>
-                <td><small>{html.escape(o_data.get("description"))}</small></td>
+                <td>{o_data.get("violation_count", 0)}</td>
+                <td><small>{o_desc}</small></td>
             </tr>
             """)
 

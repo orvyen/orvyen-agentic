@@ -216,6 +216,33 @@ class TestOrvyenScanner(unittest.TestCase):
             )
             self.assertLess(result.duration_ms, 100)
 
+    def test_cli_case_insensitive_flags(self):
+        """Verify that CLI flags accept uppercase and lowercase variants seamlessly."""
+        from orvyen.cli import build_parser
+        parser = build_parser()
+        args = parser.parse_args(["scan", ".", "-f", "HTML", "--min-severity", "high", "--fail-on", "critical"])
+        self.assertEqual(args.format, "html")
+        self.assertEqual(args.min_severity, "HIGH")
+        self.assertEqual(args.fail_on, "CRITICAL")
+
+    def test_html_reporter_with_null_properties(self):
+        """Verify HTML reporter handles missing or None fields without raising TypeError."""
+        engine = ScanEngine(self.secure_dir)
+        result = engine.run()
+        html_out = HTMLReporter.generate(result)
+        self.assertIn("<!DOCTYPE html>", html_out)
+        self.assertIn("ORVYEN AGENTIC", html_out)
+
+    def test_interactive_widget_dynamic_width(self):
+        """Verify interactive prompt render_widget scales without error on narrow terminals."""
+        import io
+        from unittest.mock import patch
+        from orvyen.reporters.console import InteractivePrompt
+
+        with patch("sys.stdout", new_callable=io.StringIO):
+            lines_count = InteractivePrompt.render_widget(text="/scan test", selected_idx=0, utf8=True, width=50)
+        self.assertGreater(lines_count, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -74,6 +74,8 @@ const pythonPath = process.env.PYTHONPATH
 const env = {
   ...process.env,
   PYTHONPATH: pythonPath,
+  PYTHONIOENCODING: process.env.PYTHONIOENCODING || "utf-8",
+  PYTHONUTF8: process.env.PYTHONUTF8 || "1",
 };
 
 const args = process.argv.slice(2);

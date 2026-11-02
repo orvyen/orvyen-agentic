@@ -61,6 +61,7 @@ def build_parser() -> argparse.ArgumentParser:
         "-f", "--format",
         choices=["terminal", "json", "html", "aibom", "pdf", "sarif", "all"],
         default="terminal",
+        type=str.lower,
         help="Output report format (default: terminal)",
     )
     scan_parser.add_argument(
@@ -72,12 +73,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--min-severity",
         choices=["INFO", "LOW", "MEDIUM", "HIGH", "CRITICAL"],
         default="INFO",
+        type=str.upper,
         help="Minimum finding severity to report (default: INFO)",
     )
     scan_parser.add_argument(
         "--fail-on",
         choices=["NONE", "LOW", "MEDIUM", "HIGH", "CRITICAL"],
         default="HIGH",
+        type=str.upper,
         help="Failure threshold for CI/CD exit code 1 (default: HIGH)",
     )
     scan_parser.add_argument(

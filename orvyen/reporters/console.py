@@ -6,6 +6,7 @@ status pills, and precision compliance summary matrices.
 """
 
 from __future__ import annotations
+import atexit
 import os
 import re
 import shutil
@@ -29,8 +30,22 @@ if hasattr(sys.stdout, "reconfigure"):
         pass
 
 
+def _should_suppress_color() -> bool:
+    """Check if color output should be suppressed per NO_COLOR standard or dumb terminal."""
+    if "NO_COLOR" in os.environ:
+        return True
+    if os.environ.get("TERM") == "dumb":
+        return True
+    return False
+
+
+_SUPPRESS_COLOR = _should_suppress_color()
+
+
 def fg(hex_code: str) -> str:
     """Returns ANSI 24-bit TrueColor foreground escape sequence."""
+    if _SUPPRESS_COLOR:
+        return ""
     hex_code = hex_code.lstrip("#")
     if len(hex_code) == 3:
         hex_code = "".join(c * 2 for c in hex_code)
@@ -42,6 +57,8 @@ def fg(hex_code: str) -> str:
 
 def bg(hex_code: str) -> str:
     """Returns ANSI 24-bit TrueColor background escape sequence."""
+    if _SUPPRESS_COLOR:
+        return ""
     hex_code = hex_code.lstrip("#")
     if len(hex_code) == 3:
         hex_code = "".join(c * 2 for c in hex_code)
@@ -63,12 +80,12 @@ COLOR_LOGO_RED = "#E53935"
 COLOR_AMBER = "#F59E0B"
 
 # Text styling primitives
-RESET = "\033[0m"
-BOLD = "\033[1m"
-DIM = "\033[2m"
-ITALIC = "\033[3m"
-UNDERLINE = "\033[4m"
-BLINK = "\033[5m"
+RESET = "" if _SUPPRESS_COLOR else "\033[0m"
+BOLD = "" if _SUPPRESS_COLOR else "\033[1m"
+DIM = "" if _SUPPRESS_COLOR else "\033[2m"
+ITALIC = "" if _SUPPRESS_COLOR else "\033[3m"
+UNDERLINE = "" if _SUPPRESS_COLOR else "\033[4m"
+BLINK = "" if _SUPPRESS_COLOR else "\033[5m"
 
 # Standard Palette
 WHITE = fg(COLOR_FOREGROUND)
@@ -82,12 +99,38 @@ RED_ACCENT = fg(COLOR_RED)
 LOGO_RED = fg(COLOR_LOGO_RED)
 AMBER_ACCENT = fg(COLOR_AMBER)
 
+_terminal_customized = False
+
 
 def force_dark_terminal() -> None:
-    """Forces terminal background to #0A0A0A and foreground to #E5E7EB even in VS Code light theme."""
-    if sys.stdout.isatty():
-        sys.stdout.write("\033]11;#0A0A0A\007\033]10;#E5E7EB\007")
+    """Forces terminal background to #0A0A0A and foreground to #E5E7EB when supported."""
+    global _terminal_customized
+    if _SUPPRESS_COLOR or not sys.stdout.isatty():
+        return
+    if os.environ.get("ORVYEN_NO_COLOR_THEME"):
+        return
+    sys.stdout.write("\033]11;#0A0A0A\007\033]10;#E5E7EB\007")
+    sys.stdout.flush()
+    _terminal_customized = True
+
+
+def reset_terminal() -> None:
+    """Restores terminal palette and guarantees cursor is visible upon process exit."""
+    global _terminal_customized
+    if not sys.stdout.isatty():
+        return
+    reset_seq = "\033[?25h\033[0m"
+    if _terminal_customized:
+        reset_seq = "\033]111\007\033]110\007" + reset_seq
+        _terminal_customized = False
+    try:
+        sys.stdout.write(reset_seq)
         sys.stdout.flush()
+    except Exception:
+        pass
+
+
+atexit.register(reset_terminal)
 
 
 # Precomputed 28x28 pixel matrix extracted directly from Orvyen_1.png
@@ -267,11 +310,12 @@ class ConsoleReporter:
         term_width = max(min(term_cols - 4, 88), 72)
         timing_str = f"{result.duration_ms:.1f}ms" if result else "7.1ms"
 
+        target_display = str(Path(result.target_path).name or result.target_path) if result and result.target_path else "~"
         header_texts = [
             "",
             f"{BOLD}{WHITE}Orvyen Agentic v{__version__}{RESET}",
             f"{GRAY_MUTED}Opus Engine • Sub-100ms • 12 Rules • 22 tests{RESET}",
-            f"{GRAY_DARK}~/orvyen-agentic • Singapore • IMDA v1.5 Compliant{RESET}",
+            f"{GRAY_DARK}{target_display} • Singapore • IMDA v1.5 Compliant{RESET}",
         ]
 
         print()
@@ -833,9 +877,13 @@ class InteractivePrompt:
         return [("/scan " + clean, "Scan specified path pre-deploy")]
 
     @classmethod
-    def render_widget(cls, text: str, selected_idx: int, utf8: bool = True, width: int = 72) -> int:
+    def render_widget(cls, text: str, selected_idx: int, utf8: bool = True, width: Optional[int] = None) -> int:
         filtered = cls.get_filtered(text)
         selected_idx = max(0, min(selected_idx, len(filtered) - 1))
+
+        if width is None or width <= 0:
+            cols = shutil.get_terminal_size((80, 24)).columns
+            width = min(72, max(44, cols - 4))
 
         inner_w = width - 2
         h_line = ("─" if utf8 else "-") * inner_w
@@ -846,16 +894,17 @@ class InteractivePrompt:
         lines = []
         # 1. Input Box (bg #111 border #222 rounded top)
         lines.append(f"  {fg('#222222')}{tl}{h_line}{tr}{RESET}")
-        disp_text = text[-62:] if len(text) > 62 else text
-        pad = " " * max(1, inner_w - 4 - len(disp_text))
+        max_input_text_len = max(10, inner_w - 6)
+        disp_text = text[-max_input_text_len:] if len(text) > max_input_text_len else text
+        pad = " " * max(0, inner_w - 4 - len(disp_text))
         lines.append(f"  {fg('#222222')}{v}{bg('#111111')}  {GRAY_MUTED}> {BOLD}{WHITE}{disp_text}{RESET}{bg('#111111')}{pad}{fg('#222222')}{v}{RESET}")
 
         # 2. Attached divider directly under input (one unified container, no separate floating boxes)
         lines.append(f"  {fg('#222222')}{div_l}{h_line}{div_r}{RESET}")
 
         # 3. Dropdown rows (bg #151515 border #222)
-        cmd_col_w = 15
-        max_desc_w = inner_w - 1 - 1 - cmd_col_w - 1  # 52 chars
+        cmd_col_w = min(15, max(8, inner_w // 4))
+        max_desc_w = max(10, inner_w - 3 - cmd_col_w)
         for idx, (cmd, desc) in enumerate(filtered):
             cmd_disp = cmd[:cmd_col_w]
             desc_clean = desc[:max_desc_w]
@@ -872,7 +921,10 @@ class InteractivePrompt:
 
         # 4. Dropdown bottom (rounded bottom)
         lines.append(f"  {fg('#222222')}{bl}{h_line}{br}{RESET}")
-        lines.append(f"  {DIM2}[↑/↓] Select  •  [Tab] Complete  •  [Enter] Execute  •  [Ctrl+C] Exit{RESET}")
+        hint = "[↑/↓] Select  •  [Tab] Complete  •  [Enter] Execute  •  [Ctrl+C] Exit"
+        if len(hint) > width - 2:
+            hint = "[↑/↓] Select  •  [Enter] Run  •  [Ctrl+C] Exit"
+        lines.append(f"  {DIM2}{hint}{RESET}")
 
         total_lines = len(lines)
         up_count = total_lines - 1
@@ -1071,5 +1123,6 @@ class InteractivePrompt:
                     termios.tcsetattr(fd, termios.TCSADRAIN, old_set)
                 except Exception:
                     pass
+            reset_terminal()
 
 

@@ -3,6 +3,7 @@ Scan engine coordinator: ingests codebase, runs AST & manifest parsers, and eval
 """
 
 from __future__ import annotations
+import os
 import time
 from pathlib import Path
 from typing import List, Set, Optional
@@ -120,7 +121,7 @@ class ScanEngine:
         return result
 
     def _collect_files(self) -> List[Path]:
-        """Recursively collect scan targets while respecting ignore lists."""
+        """Recursively collect scan targets while respecting ignore lists and avoiding symlink cycles."""
         collected: List[Path] = []
 
         if self.target_path.is_file():
@@ -129,24 +130,24 @@ class ScanEngine:
         target_parts = set(self.target_path.parts)
         is_explicit_test = any(t in target_parts for t in TEST_DIRS)
 
-        for p in self.target_path.rglob("*"):
-            if p.is_file():
-                try:
-                    rel_parts = set(p.relative_to(self.target_path).parts[:-1])
-                except ValueError:
-                    rel_parts = set(p.parts[:-1])
+        try:
+            for root, dirs, files in os.walk(str(self.target_path), topdown=True, followlinks=False):
+                # Prune ignored and test directories in-place to avoid descending into them
+                dirs[:] = [
+                    d for d in dirs
+                    if d not in IGNORED_DIRS
+                    and (is_explicit_test or d not in TEST_DIRS)
+                ]
 
-                if any(ign in rel_parts for ign in IGNORED_DIRS):
-                    continue
-                if not is_explicit_test and any(td in rel_parts for td in TEST_DIRS):
-                    continue
-
-                ext = p.suffix.lower()
-                name = p.name.lower()
-                if (
-                    ext in (".py", ".json", ".yaml", ".yml", ".env")
-                    or name.startswith(".env")
-                ):
-                    collected.append(p)
+                for fname in sorted(files):
+                    ext = os.path.splitext(fname)[1].lower()
+                    name_lower = fname.lower()
+                    if (
+                        ext in (".py", ".json", ".yaml", ".yml", ".env")
+                        or name_lower.startswith(".env")
+                    ):
+                        collected.append(Path(root) / fname)
+        except (PermissionError, OSError):
+            pass
 
         return collected
