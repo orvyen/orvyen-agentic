@@ -26,9 +26,13 @@ class MCPManifestParser:
         except Exception:
             return
 
+        if not isinstance(self.raw_data, dict):
+            return
+
         # Check standard MCP keys: "mcpServers" or direct server dictionary
-        servers_dict = self.raw_data.get("mcpServers", {})
-        if not servers_dict and isinstance(self.raw_data, dict):
+        raw_servers = self.raw_data.get("mcpServers")
+        servers_dict = raw_servers if isinstance(raw_servers, dict) else {}
+        if not servers_dict:
             # Check if root contains server-like objects
             for k, v in self.raw_data.items():
                 if isinstance(v, dict) and "command" in v:
@@ -38,10 +42,13 @@ class MCPManifestParser:
             if not isinstance(server_cfg, dict):
                 continue
 
-            command = str(server_cfg.get("command", ""))
-            args = [str(a) for a in server_cfg.get("args", [])]
-            env_vars = {str(k): str(v) for k, v in server_cfg.get("env", {}).items()}
-            declared_tools = [str(t) for t in server_cfg.get("tools", [])]
+            command = str(server_cfg.get("command", "") or "")
+            raw_args = server_cfg.get("args")
+            args = [str(a) for a in raw_args] if isinstance(raw_args, list) else []
+            raw_env = server_cfg.get("env")
+            env_vars = {str(k): str(v) for k, v in raw_env.items()} if isinstance(raw_env, dict) else {}
+            raw_tools = server_cfg.get("tools")
+            declared_tools = [str(t) for t in raw_tools] if isinstance(raw_tools, list) else []
 
             server = MCPServer(
                 name=server_name,

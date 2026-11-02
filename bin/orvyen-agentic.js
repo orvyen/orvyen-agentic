@@ -26,10 +26,21 @@ const args = process.argv.slice(2);
 let result = null;
 let lastError = null;
 
+const pkgRoot = path.resolve(__dirname, "..");
+const pythonPath = process.env.PYTHONPATH
+  ? `${pkgRoot}${path.delimiter}${process.env.PYTHONPATH}`
+  : pkgRoot;
+
+const env = {
+  ...process.env,
+  PYTHONPATH: pythonPath,
+};
+
 for (const bin of candidates) {
   result = spawnSync(bin, ["-m", "orvyen.cli", ...args], {
     stdio: "inherit",
     shell: false,
+    env,
   });
 
   if (!result.error) {

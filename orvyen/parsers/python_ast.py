@@ -173,13 +173,14 @@ class PythonAgentASTVisitor(ast.NodeVisitor):
         # LangGraph: workflow.add_node("node_name", func)
         if call_name.endswith(".add_node"):
             if len(node.args) >= 1:
-                node_name = self._extract_string_literal(node.args[0]) or "unknown_node"
-                self.agents.append(AgentNode(
-                    name=node_name,
-                    framework="langgraph",
-                    file_path=self.file_path,
-                    line_number=node.lineno,
-                ))
+                node_name = self._extract_string_literal(node.args[0])
+                if node_name:
+                    self.agents.append(AgentNode(
+                        name=node_name,
+                        framework="langgraph",
+                        file_path=self.file_path,
+                        line_number=node.lineno,
+                    ))
 
         # LangGraph: workflow.add_edge("from", "to")
         if call_name.endswith(".add_edge"):
@@ -210,7 +211,9 @@ class PythonAgentASTVisitor(ast.NodeVisitor):
                         ))
 
         # LangGraph: workflow.compile(...)
-        if call_name.endswith(".compile"):
+        is_langgraph_file = any(lg in self.source_code for lg in ("langgraph", "StateGraph", "MessageGraph"))
+        is_non_langgraph_call = call_name.startswith(("re.", "regex.", "AIBOMCompiler.", "Compiler.", "compiler.", "Pattern."))
+        if is_langgraph_file and call_name.endswith(".compile") and not is_non_langgraph_call:
             # Check for recursion_limit or checkpointer
             has_recursion_limit = False
             limit_val = None
@@ -319,22 +322,23 @@ class PythonAgentASTVisitor(ast.NodeVisitor):
         ))
 
         # Check keyword content in SystemMessage(content=...)
-        for kw in node.keywords:
-            if kw.arg in ("content", "system", "template"):
-                if isinstance(kw.value, ast.JoinedStr):  # f-string!
-                    self.system_prompt_injections.append({
-                        "line_number": node.lineno,
-                        "col_offset": node.col_offset,
-                        "snippet": self.get_code_snippet(node.lineno),
-                        "message": "Unsanitized f-string variable interpolation inside system prompt instruction.",
-                    })
-                elif isinstance(kw.value, ast.BinOp) and isinstance(kw.value.op, ast.Add):
-                    self.system_prompt_injections.append({
-                        "line_number": node.lineno,
-                        "col_offset": node.col_offset,
-                        "snippet": self.get_code_snippet(node.lineno),
-                        "message": "Unescaped string concatenation ('+') directly into system prompt instruction.",
-                    })
+        if is_system_prompt_target:
+            for kw in node.keywords:
+                if kw.arg in ("content", "system", "template"):
+                    if isinstance(kw.value, ast.JoinedStr):  # f-string!
+                        self.system_prompt_injections.append({
+                            "line_number": node.lineno,
+                            "col_offset": node.col_offset,
+                            "snippet": self.get_code_snippet(node.lineno),
+                            "message": "Unsanitized f-string variable interpolation inside system prompt instruction.",
+                        })
+                    elif isinstance(kw.value, ast.BinOp) and isinstance(kw.value.op, ast.Add):
+                        self.system_prompt_injections.append({
+                            "line_number": node.lineno,
+                            "col_offset": node.col_offset,
+                            "snippet": self.get_code_snippet(node.lineno),
+                            "message": "Unescaped string concatenation ('+') directly into system prompt instruction.",
+                        })
 
         # Also check tuple patterns like ("system", f"You are... {user_input}")
         for arg in node.args:
@@ -361,12 +365,30 @@ class PythonAgentASTVisitor(ast.NodeVisitor):
 
     def _inspect_pii_in_call(self, node: ast.Call, call_name: str) -> None:
         """Detect variables or dictionary keys containing PII sent directly to external tools or LLM calls."""
+        import re
         pii_keywords = {"email", "phone", "ssn", "nric", "credit_card", "card_number", "passport", "dob", "address"}
 
         # Inspect all arguments passed to this function call
         for arg in node.args:
+            # Constant literals (e.g. byte strings like b'\nendobj\n') are not customer PII variables
+            if isinstance(arg, ast.Constant):
+                continue
+
             arg_name = self._get_call_name(arg).lower()
-            if any(p in arg_name for p in pii_keywords):
+            tokens = set(re.findall(r"[a-z0-9]+", arg_name))
+            has_pii = False
+            for p in pii_keywords:
+                if "_" in p:
+                    if p in arg_name:
+                        has_pii = True
+                        break
+                elif p in tokens:
+                    if p == "address" and any(net in arg_name for net in ("ip_", "server_", "socket_", "host_", "mac_")):
+                        continue
+                    has_pii = True
+                    break
+
+            if has_pii:
                 # Ensure it's not wrapped in a mask/redact/anonymize call
                 if not any(sanitizer in call_name.lower() for sanitizer in ("mask", "redact", "anonymize", "hash", "clean")):
                     self.pii_exposures.append({

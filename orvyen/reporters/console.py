@@ -281,9 +281,9 @@ class ConsoleReporter:
 
         print()
         # Full status line: "↑ 12 checks • AIBOM + OWASP + IMDA • Xms scan • 3 Tools (0 High-Privilege) • 1 MCP Gateways"
-        tools_count = len(result.tools) if result and result.tools else 3
+        tools_count = len(result.tools) if result and result.tools is not None else 0
         exec_count = sum(1 for t in result.tools if t.privilege.value in ("EXECUTE", "ADMIN")) if result and result.tools else 0
-        mcp_count = len(result.mcp_servers) if result and result.mcp_servers else 1
+        mcp_count = len(result.mcp_servers) if result and result.mcp_servers is not None else 0
 
         status_text = (
             f"12 checks • AIBOM + OWASP + IMDA • {timing_str} scan • "

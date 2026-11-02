@@ -35,6 +35,12 @@ IGNORED_DIRS: Set[str] = {
     "site-packages",
 }
 
+TEST_DIRS: Set[str] = {
+    "tests",
+    "test",
+    "testing",
+}
+
 
 class ScanEngine:
     """Orchestrates multi-phase static scanning of agent codebases."""
@@ -120,17 +126,27 @@ class ScanEngine:
         if self.target_path.is_file():
             return [self.target_path]
 
+        target_parts = set(self.target_path.parts)
+        is_explicit_test = any(t in target_parts for t in TEST_DIRS)
+
         for p in self.target_path.rglob("*"):
             if p.is_file():
-                # Check if any parent part is in ignored dirs
-                parts = p.parts
-                if not any(ign in parts for ign in IGNORED_DIRS):
-                    ext = p.suffix.lower()
-                    name = p.name.lower()
-                    if (
-                        ext in (".py", ".json", ".yaml", ".yml", ".env")
-                        or name.startswith(".env")
-                    ):
-                        collected.append(p)
+                try:
+                    rel_parts = set(p.relative_to(self.target_path).parts[:-1])
+                except ValueError:
+                    rel_parts = set(p.parts[:-1])
+
+                if any(ign in rel_parts for ign in IGNORED_DIRS):
+                    continue
+                if not is_explicit_test and any(td in rel_parts for td in TEST_DIRS):
+                    continue
+
+                ext = p.suffix.lower()
+                name = p.name.lower()
+                if (
+                    ext in (".py", ".json", ".yaml", ".yml", ".env")
+                    or name.startswith(".env")
+                ):
+                    collected.append(p)
 
         return collected
