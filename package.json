@@ -21,14 +21,14 @@
   "homepage": "https://github.com/orvyen/orvyen-agentic",
   "repository": {
     "type": "git",
-    "url": "https://github.com/orvyen/orvyen-agentic.git"
+    "url": "git+https://github.com/orvyen/orvyen-agentic.git"
   },
   "bugs": {
     "url": "https://github.com/orvyen/orvyen-agentic/issues"
   },
   "bin": {
-    "orvyen-agentic": "./bin/orvyen-agentic.js",
-    "orvyen": "./bin/orvyen-agentic.js"
+    "orvyen-agentic": "bin/orvyen-agentic.js",
+    "orvyen": "bin/orvyen-agentic.js"
   },
   "scripts": {
     "test": "python3 -m unittest discover tests",
