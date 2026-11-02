@@ -1,6 +1,12 @@
-__pycache__/
+**/__pycache__/**
+**/__pycache__
 *.pyc
 *.pyo
 *.pyd
 .pytest_cache/
+tests/
+.git/
+.github/
+*.egg-info/
+
 

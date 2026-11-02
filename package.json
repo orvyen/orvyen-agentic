@@ -23,15 +23,22 @@
     "type": "git",
     "url": "https://github.com/orvyen/orvyen-agentic.git"
   },
+  "bugs": {
+    "url": "https://github.com/orvyen/orvyen-agentic/issues"
+  },
   "bin": {
     "orvyen-agentic": "./bin/orvyen-agentic.js"
   },
   "scripts": {
-    "postinstall": "node bin/check-python.js"
+    "test": "python3 -m unittest discover tests",
+    "postinstall": "node bin/check-python.js",
+    "prepack": "node -e \"const fs = require('fs'), path = require('path'); function rmPycache(dir) { if (!fs.existsSync(dir)) return; for (const file of fs.readdirSync(dir)) { const cur = path.join(dir, file); if (fs.statSync(cur).isDirectory()) { if (file === '__pycache__') fs.rmSync(cur, { recursive: true, force: true }); else rmPycache(cur); } } } rmPycache('.');\""
   },
   "files": [
     "bin/",
-    "orvyen/"
+    "orvyen/",
+    "tests/fixtures/",
+    "LICENSE"
   ],
   "engines": {
     "node": ">=18"

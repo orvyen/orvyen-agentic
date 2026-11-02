@@ -1,14 +1,9 @@
 #!/usr/bin/env node
 /**
- * orvyen-agentic npm shim.
+ * orvyen-agentic npm CLI shim.
  *
- * Delegates all CLI arguments directly to `python -m orvyen.cli` so the npm
- * package is a zero-logic proxy. No Python code is duplicated here.
- *
- * Resolution order for the Python interpreter:
- *   1. ORVYEN_PYTHON env var (explicit override)
- *   2. `python3` on PATH
- *   3. `python` on PATH
+ * Delegates arguments directly to `python -m orvyen.cli`.
+ * Injects package root into PYTHONPATH so the bundled orvyen package is always resolved.
  */
 
 "use strict";
@@ -16,15 +11,60 @@
 const { spawnSync } = require("child_process");
 const path = require("path");
 
-const candidates = process.env.ORVYEN_PYTHON
-  ? [process.env.ORVYEN_PYTHON]
-  : process.platform === "win32"
-  ? ["python", "python3", "py"]
-  : ["python3", "python"];
+function getCandidates() {
+  if (process.env.ORVYEN_PYTHON) {
+    return [process.env.ORVYEN_PYTHON];
+  }
+  return process.platform === "win32"
+    ? ["python3", "python", "py"]
+    : ["python3", "python"];
+}
 
-const args = process.argv.slice(2);
-let result = null;
-let lastError = null;
+function getCheckArgs(bin) {
+  return bin === "py"
+    ? ["-3", "-c", "import sys; assert sys.version_info >= (3, 10)"]
+    : ["-c", "import sys; assert sys.version_info >= (3, 10)"];
+}
+
+function getSpawnArgs(bin, cliArgs) {
+  return bin === "py"
+    ? ["-3", "-m", "orvyen.cli", ...cliArgs]
+    : ["-m", "orvyen.cli", ...cliArgs];
+}
+
+function findPython(candidates) {
+  for (const bin of candidates) {
+    try {
+      const res = spawnSync(bin, getCheckArgs(bin), {
+        stdio: "ignore",
+        windowsHide: true,
+      });
+      if (!res.error && res.status === 0) {
+        return bin;
+      }
+    } catch (_) {}
+  }
+  return null;
+}
+
+const candidates = getCandidates();
+let selectedPython = findPython(candidates);
+
+// If explicit ORVYEN_PYTHON was provided but failed version check, still attempt invocation
+if (!selectedPython && process.env.ORVYEN_PYTHON) {
+  selectedPython = process.env.ORVYEN_PYTHON;
+}
+
+if (!selectedPython) {
+  console.error(
+    `[orvyen-agentic] Error: A compatible Python 3.10+ interpreter was not found.\n` +
+    `Checked candidate binaries: ${candidates.join(", ")}\n\n` +
+    `Please ensure Python 3.10+ is installed and available on your PATH.\n` +
+    `You can also set the ORVYEN_PYTHON environment variable to your Python binary:\n` +
+    `  export ORVYEN_PYTHON=/usr/bin/python3`
+  );
+  process.exit(1);
+}
 
 const pkgRoot = path.resolve(__dirname, "..");
 const pythonPath = process.env.PYTHONPATH
@@ -36,28 +76,26 @@ const env = {
   PYTHONPATH: pythonPath,
 };
 
-for (const bin of candidates) {
-  result = spawnSync(bin, ["-m", "orvyen.cli", ...args], {
-    stdio: "inherit",
-    shell: false,
-    env,
-  });
+const args = process.argv.slice(2);
+const spawnArgs = getSpawnArgs(selectedPython, args);
 
-  if (!result.error) {
-    process.exit(result.status ?? 0);
-  }
-  lastError = result.error;
-  if (result.error.code !== "ENOENT") {
-    // If it was another error (permission, etc.), stop and report it
-    break;
-  }
+const result = spawnSync(selectedPython, spawnArgs, {
+  stdio: "inherit",
+  shell: false,
+  windowsHide: true,
+  env,
+});
+
+if (result.error) {
+  console.error(`[orvyen-agentic] Failed to execute Python (${selectedPython}): ${result.error.message}`);
+  process.exit(1);
 }
 
-const msg =
-  lastError && lastError.code === "ENOENT"
-    ? `[orvyen-agentic] Compatible Python interpreter (${candidates.join(", ")}) not found.\n` +
-      "Install Python 3.10+ and make sure it is on PATH, or set the ORVYEN_PYTHON env var.\n" +
-      "Alternatively install the package directly: pip install orvyen-agentic"
-    : `[orvyen-agentic] Failed to spawn Python: ${lastError ? lastError.message : "Unknown error"}`;
-console.error(msg);
-process.exit(1);
+if (result.status !== null) {
+  process.exit(result.status);
+} else if (result.signal) {
+  const sigMap = { SIGINT: 130, SIGTERM: 143, SIGHUP: 129, SIGQUIT: 131 };
+  process.exit(sigMap[result.signal] || 1);
+} else {
+  process.exit(0);
+}

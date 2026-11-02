@@ -11,18 +11,18 @@ const { spawnSync } = require("child_process");
 const candidates = process.env.ORVYEN_PYTHON
   ? [process.env.ORVYEN_PYTHON]
   : process.platform === "win32"
-  ? ["python", "python3", "py"]
+  ? ["python3", "python", "py"]
   : ["python3", "python"];
 
 let found = false;
 let matchedBin = "";
 
 for (const bin of candidates) {
-  const result = spawnSync(
-    bin,
-    ["-c", "import sys; assert sys.version_info >= (3, 10)"],
-    { stdio: "pipe" }
-  );
+  const checkArgs = bin === "py"
+    ? ["-3", "-c", "import sys; assert sys.version_info >= (3, 10)"]
+    : ["-c", "import sys; assert sys.version_info >= (3, 10)"];
+
+  const result = spawnSync(bin, checkArgs, { stdio: "pipe", windowsHide: true });
   if (result.status === 0 && !result.error) {
     found = true;
     matchedBin = bin;

@@ -170,6 +170,9 @@ def interactive_loop(
             curr_target = Path("tests/fixtures/secure_agent")
             if not curr_target.exists():
                 curr_target = Path(__file__).parent.parent / "tests" / "fixtures" / "secure_agent"
+            if not curr_target.exists():
+                print(f"  {RED_ACCENT}Error: Fixture directory 'tests/fixtures/secure_agent' not found.{RESET}")
+                continue
             engine = ScanEngine(curr_target)
             res = engine.run()
             res.aibom = AIBOMCompiler.compile(res)
@@ -181,6 +184,9 @@ def interactive_loop(
             curr_target = Path("tests/fixtures/vulnerable_agent")
             if not curr_target.exists():
                 curr_target = Path(__file__).parent.parent / "tests" / "fixtures" / "vulnerable_agent"
+            if not curr_target.exists():
+                print(f"  {RED_ACCENT}Error: Fixture directory 'tests/fixtures/vulnerable_agent' not found.{RESET}")
+                continue
             engine = ScanEngine(curr_target)
             res = engine.run()
             res.aibom = AIBOMCompiler.compile(res)
@@ -237,8 +243,12 @@ def main(argv: list[str] | None = None) -> int:
         except Exception:
             pass
 
+    raw_argv = list(argv if argv is not None else sys.argv[1:])
+    if raw_argv and raw_argv[0] not in ("scan", "-h", "--help", "-v", "--version"):
+        raw_argv.insert(0, "scan")
+
     parser = build_parser()
-    args = parser.parse_args(argv)
+    args = parser.parse_args(raw_argv)
 
     if not args.command:
         # Default to scan if path is provided or scan current dir
@@ -320,56 +330,66 @@ def main(argv: list[str] | None = None) -> int:
                 fancy=is_fancy,
             )
 
-    if args.format in ("json", "all"):
-        json_path = out_dir / "orvyen_report.json"
-        JSONReporter.write_to_file(result, json_path)
-        if not args.quiet and args.format != "terminal":
-            print(f"[+] JSON report saved to: {json_path}")
+    if args.format != "terminal":
+        try:
+            out_dir.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            print(f"Error: Unable to create output directory '{out_dir}': {e}", file=sys.stderr)
+            return 2
 
-    if args.format in ("html", "all"):
-        html_path = out_dir / "orvyen_report.html"
-        HTMLReporter.write_to_file(result, html_path)
-        if not args.quiet and args.format != "terminal":
-            print(f"[+] HTML dashboard saved to: {html_path}")
+    try:
+        if args.format in ("json", "all"):
+            json_path = out_dir / "orvyen_report.json"
+            JSONReporter.write_to_file(result, json_path)
+            if not args.quiet and args.format != "terminal":
+                print(f"[+] JSON report saved to: {json_path}")
 
-    if args.format in ("aibom", "all"):
-        aibom_json_path = out_dir / "aibom.json"
-        aibom_md_path = out_dir / "aibom.md"
-        out_dir.mkdir(parents=True, exist_ok=True)
-        import json
-        aibom_json_path.write_text(json.dumps(result.aibom, indent=2), encoding="utf-8")
-        license_key = getattr(args, "license_key", None)
-        aibom_md_path.write_text(
-            AIBOMCompiler.to_markdown(result.aibom, license_key=license_key),
-            encoding="utf-8",
-        )
-        if not args.quiet and args.format != "terminal":
-            print(f"[+] AIBOM artifacts saved to: {out_dir}")
+        if args.format in ("html", "all"):
+            html_path = out_dir / "orvyen_report.html"
+            HTMLReporter.write_to_file(result, html_path)
+            if not args.quiet and args.format != "terminal":
+                print(f"[+] HTML dashboard saved to: {html_path}")
 
-    if args.format in ("sarif", "all"):
-        sarif_path = out_dir / "orvyen_report.sarif"
-        SARIFReporter.write_to_file(result, sarif_path)
-        if not args.quiet and args.format != "terminal":
-            print(f"[+] SARIF 2.1.0 report saved to: {sarif_path}")
+        if args.format in ("aibom", "all"):
+            aibom_json_path = out_dir / "aibom.json"
+            aibom_md_path = out_dir / "aibom.md"
+            import json
+            aibom_json_path.write_text(json.dumps(result.aibom, indent=2), encoding="utf-8")
+            license_key = getattr(args, "license_key", None)
+            aibom_md_path.write_text(
+                AIBOMCompiler.to_markdown(result.aibom, license_key=license_key),
+                encoding="utf-8",
+            )
+            if not args.quiet and args.format != "terminal":
+                print(f"[+] AIBOM artifacts saved to: {out_dir}")
 
-    if args.format == "pdf":
-        license_key = getattr(args, "license_key", None)
-        if not is_valid_license(license_key):
-            print("Requires license: orvyen.com/pricing", file=sys.stderr)
-            return 1
-        pdf_path = out_dir / "orvyen_report.pdf"
-        PDFReporter.write_to_file(result, pdf_path, license_key=license_key)
-        if not args.quiet:
-            print(f"[+] PDF audit report saved to: {pdf_path}")
-    elif args.format == "all":
-        license_key = getattr(args, "license_key", None)
-        if is_valid_license(license_key):
+        if args.format in ("sarif", "all"):
+            sarif_path = out_dir / "orvyen_report.sarif"
+            SARIFReporter.write_to_file(result, sarif_path)
+            if not args.quiet and args.format != "terminal":
+                print(f"[+] SARIF 2.1.0 report saved to: {sarif_path}")
+
+        if args.format == "pdf":
+            license_key = getattr(args, "license_key", None)
+            if not is_valid_license(license_key):
+                print("Requires license: orvyen.com/pricing", file=sys.stderr)
+                return 1
             pdf_path = out_dir / "orvyen_report.pdf"
             PDFReporter.write_to_file(result, pdf_path, license_key=license_key)
             if not args.quiet:
                 print(f"[+] PDF audit report saved to: {pdf_path}")
-        elif not args.quiet:
-            print("[!] PDF audit report skipped (Requires license: orvyen.com/pricing)")
+        elif args.format == "all":
+            license_key = getattr(args, "license_key", None)
+            if is_valid_license(license_key):
+                pdf_path = out_dir / "orvyen_report.pdf"
+                PDFReporter.write_to_file(result, pdf_path, license_key=license_key)
+                if not args.quiet:
+                    print(f"[+] PDF audit report saved to: {pdf_path}")
+            elif not args.quiet:
+                print("[!] PDF audit report skipped (Requires license: orvyen.com/pricing)")
+    except Exception as e:
+        print(f"Error: Failed to write report artifacts to '{out_dir}': {e}", file=sys.stderr)
+        return 1
 
     # Check failure gate
     if args.fail_on != "NONE":

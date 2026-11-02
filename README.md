@@ -49,16 +49,22 @@
 
 ### Installation
 
+**Run instantly via npx (zero installation):**
 ```bash
-# Clone the repository
-git clone https://github.com/orvyen/orvyen-agentic.git
-cd orvyen-agentic
-
-# Install locally via pip
-pip install -e .
+npx orvyen-agentic scan .
 ```
 
-*Note: Orvyen Agentic has zero mandatory third-party dependencies and runs natively on Python 3.10+.*
+**Or install globally via npm:**
+```bash
+npm install -g orvyen-agentic
+```
+
+**Or install via pip / Python:**
+```bash
+pip install orvyen-agentic
+```
+
+*Note: Orvyen Agentic runs natively on Python 3.10+ with zero external runtime dependencies.*
 
 ---
 
