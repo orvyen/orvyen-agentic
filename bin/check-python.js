@@ -32,10 +32,10 @@ for (const bin of candidates) {
 
 if (!found) {
   console.warn(
-    `[orvyen-agentic] WARNING: Python 3.10+ not detected via (${candidates.join(", ")}).\n` +
-    "Install Python 3.10+ and ensure it is on PATH before using orvyen-agentic.\n" +
+    `[@orvyen/agentic] WARNING: Python 3.10+ not detected via (${candidates.join(", ")}).\n` +
+    "Install Python 3.10+ and ensure it is on PATH before using @orvyen/agentic.\n" +
     "You can override the interpreter with: ORVYEN_PYTHON=/path/to/python3"
   );
 } else {
-  console.log(`[orvyen-agentic] Python interpreter check passed (${matchedBin}).`);
+  console.log(`[@orvyen/agentic] Python interpreter check passed (${matchedBin}).`);
 }

@@ -5,8 +5,8 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![PyPI version](https://img.shields.io/pypi/v/orvyen-agentic.svg?color=blue)](https://pypi.org/project/orvyen-agentic/)
-[![npm version](https://img.shields.io/npm/v/orvyen-agentic.svg?color=red)](https://www.npmjs.com/package/orvyen-agentic)
-[![tests](https://img.shields.io/badge/tests-22%2F22-brightgreen.svg)](https://github.com/orvyen/orvyen-agentic)
+[![npm version](https://img.shields.io/npm/v/@orvyen/agentic.svg?color=red)](https://www.npmjs.com/package/@orvyen/agentic)
+[![tests](https://img.shields.io/badge/tests-25%2F25-brightgreen.svg)](https://github.com/orvyen/orvyen-agentic)
 [![time](https://img.shields.io/badge/time-7.1ms-success.svg)](https://github.com/orvyen/orvyen-agentic)
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![OWASP LLM Top 10](https://img.shields.io/badge/OWASP-LLM_Top_10-orange)](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
@@ -51,12 +51,12 @@
 
 **Run instantly via npx (zero installation):**
 ```bash
-npx orvyen-agentic scan .
+npx @orvyen/agentic scan .
 ```
 
 **Or install globally via npm:**
 ```bash
-npm install -g orvyen-agentic
+npm install -g @orvyen/agentic
 ```
 
 **Or install via pip / Python:**

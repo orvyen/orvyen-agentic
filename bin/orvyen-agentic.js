@@ -57,7 +57,7 @@ if (!selectedPython && process.env.ORVYEN_PYTHON) {
 
 if (!selectedPython) {
   console.error(
-    `[orvyen-agentic] Error: A compatible Python 3.10+ interpreter was not found.\n` +
+    `[@orvyen/agentic] Error: A compatible Python 3.10+ interpreter was not found.\n` +
     `Checked candidate binaries: ${candidates.join(", ")}\n\n` +
     `Please ensure Python 3.10+ is installed and available on your PATH.\n` +
     `You can also set the ORVYEN_PYTHON environment variable to your Python binary:\n` +
@@ -89,7 +89,7 @@ const result = spawnSync(selectedPython, spawnArgs, {
 });
 
 if (result.error) {
-  console.error(`[orvyen-agentic] Failed to execute Python (${selectedPython}): ${result.error.message}`);
+  console.error(`[@orvyen/agentic] Failed to execute Python (${selectedPython}): ${result.error.message}`);
   process.exit(1);
 }
 

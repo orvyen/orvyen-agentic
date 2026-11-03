@@ -1,5 +1,5 @@
 {
-  "name": "orvyen-agentic",
+  "name": "@orvyen/agentic",
   "version": "0.3.0",
   "description": "Static Security & Compliance Scanner for AI Agents (LangChain, LangGraph, CrewAI, MCP)",
   "keywords": [
@@ -26,9 +26,13 @@
   "bugs": {
     "url": "https://github.com/orvyen/orvyen-agentic/issues"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
-    "orvyen-agentic": "bin/orvyen-agentic.js",
-    "orvyen": "bin/orvyen-agentic.js"
+    "agentic": "bin/orvyen-agentic.js",
+    "orvyen": "bin/orvyen-agentic.js",
+    "orvyen-agentic": "bin/orvyen-agentic.js"
   },
   "scripts": {
     "test": "python3 -m unittest discover tests",
