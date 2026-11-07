@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./sc1.png" alt="Orvyen Agentic - Static Security & Compliance Scanning for AI Agents" width="100%" />
+</p>
+
 # Orvyen Agentic
 
 > **Static Security & Compliance Scanning for AI Agents**  
@@ -70,6 +74,10 @@ pip install orvyen-agentic
 
 ## CLI Usage
 
+<p align="center">
+  <img src="./sc3.png" alt="Orvyen Agentic Interactive CLI Terminal Scanner" width="100%" />
+</p>
+
 ### Basic Scan
 
 Scan the current working directory:
@@ -111,6 +119,14 @@ orvyen-agentic scan . --fail-on HIGH
 # Strict mode: fail on any finding (LOW, MEDIUM, HIGH, CRITICAL)
 orvyen-agentic scan . --fail-on LOW
 ```
+
+---
+
+## Executive Compliance & Risk Dashboard
+
+<p align="center">
+  <img src="./sc2.png" alt="Orvyen Agentic Compliance Scorecards and Interactive Terminal Dashboard" width="100%" />
+</p>
 
 ---
 
