@@ -48,6 +48,5 @@ def is_valid_license(key: str | None) -> bool:
 
 
 UPGRADE_PROMPT = (
-    "\033[33m[Orvyen] This feature requires a Pro license. "
-    "Get yours at: https://orvyen.com/pricing\033[0m"
+    "\033[33m[Orvyen] This feature requires a Pro license.\033[0m"
 )

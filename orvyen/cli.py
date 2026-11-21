@@ -130,7 +130,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--license-key",
         default=None,
         metavar="KEY",
-        help="Orvyen Pro license key (unlocks AIBOM Markdown clause mapping). Get one at orvyen.com/pricing",
+        help="Orvyen Pro license key (unlocks PDF and HTML report formats, and AIBOM Markdown clause mapping).",
     )
 
     return parser
@@ -503,7 +503,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.format == "html":
             license_key = getattr(args, "license_key", None)
             if not is_valid_license(license_key):
-                print("Requires license: orvyen.com/pricing", file=sys.stderr)
+                print("Requires Orvyen Pro license key (--license-key).", file=sys.stderr)
                 return 1
             html_path = out_dir / "orvyen_report.html"
             HTMLReporter.write_to_file(result, html_path)
@@ -513,7 +513,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.format == "pdf":
             license_key = getattr(args, "license_key", None)
             if not is_valid_license(license_key):
-                print("Requires license: orvyen.com/pricing", file=sys.stderr)
+                print("Requires Orvyen Pro license key (--license-key).", file=sys.stderr)
                 return 1
             pdf_path = out_dir / "orvyen_report.pdf"
             PDFReporter.write_to_file(result, pdf_path, license_key=license_key)

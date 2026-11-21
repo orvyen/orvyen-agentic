@@ -258,5 +258,5 @@ python -m unittest discover -s tests -p "test_*.py" -v
 
 ## License
 
-Developed by [Orvyen](https://orvyen.com).  
+Developed by Orvyen.  
 Licensed under the [Apache 2.0 License](https://opensource.org/licenses/Apache-2.0).
