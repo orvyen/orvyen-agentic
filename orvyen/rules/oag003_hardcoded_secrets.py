@@ -72,4 +72,23 @@ class OAG003HardcodedSecrets(BaseRule):
                         )
                     )
 
+        # 3. Check findings from Python AST visitors
+        for file_path, visitor in ctx.python_visitors.items():
+            for item in visitor.hardcoded_secrets:
+                findings.append(
+                    Finding(
+                        rule_id=self.metadata.id,
+                        rule_title=self.metadata.title,
+                        severity=self.metadata.severity,
+                        file_path=file_path,
+                        line_number=item.get("line_number", 1),
+                        column=item.get("column", item.get("col_offset", 0) + 1),
+                        code_snippet=item.get("snippet", ""),
+                        message=item.get("message", "Hardcoded credential detected in Python source code."),
+                        remediation=self.metadata.remediation,
+                        owasp_id=self.metadata.owasp_id,
+                        imda_pillar=self.metadata.imda_pillar,
+                    )
+                )
+
         return findings

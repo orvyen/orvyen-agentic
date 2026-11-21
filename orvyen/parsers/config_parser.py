@@ -16,6 +16,8 @@ SECRET_PATTERNS = [
     (r"AIza[0-9A-Za-z-_]{35}", "Google Cloud / Gemini API Key"),
     (r"AKIA[0-9A-Z]{16}", "AWS Access Key ID"),
     (r"-----BEGIN (?:RSA )?PRIVATE KEY-----", "Private Cryptographic Key"),
+    (r"hf_[a-zA-Z0-9]{30,}", "HuggingFace Access Token"),
+    (r"npm_[a-zA-Z0-9]{30,}", "npm Access Token"),
     (
         r"(?:api[_-]?key|secret[_-]?key|auth[_-]?token|password)\s*[:=]\s*['\"]([a-zA-Z0-9_!@#$%^&*()\-+=]{8,})['\"]",
         "Assigned Secret Variable",

@@ -4,6 +4,7 @@ AST-based static analyzer for Python agent code (LangChain, LangGraph, CrewAI).
 
 from __future__ import annotations
 import ast
+import re
 from pathlib import Path
 from typing import List, Dict, Set, Any, Optional, Tuple
 
@@ -13,6 +14,66 @@ from orvyen.core.models import (
     AgentNode,
     GraphEdge,
 )
+from orvyen.parsers.config_parser import SECRET_PATTERNS
+
+SECRET_KEYWORDS = (
+    "api_key",
+    "apikey",
+    "secret_key",
+    "secretkey",
+    "auth_token",
+    "authtoken",
+    "access_token",
+    "accesstoken",
+    "private_key",
+    "privkey",
+    "client_secret",
+    "password",
+    "passwd",
+    "db_pass",
+    "db_password",
+    "app_secret",
+)
+
+
+def _is_secret_identifier(name: str) -> bool:
+    name_lower = name.lower()
+    if any(k in name_lower for k in SECRET_KEYWORDS):
+        return True
+    if name_lower in ("secret", "token", "password", "api_key", "apikey"):
+        return True
+    return False
+
+
+def _is_placeholder_secret(val: str) -> bool:
+    v = val.strip().lower()
+    if len(v) < 8:
+        return True
+    if v.startswith(("$", "{", "%")) or v.endswith(("}", "%")):
+        return True
+    placeholders = {
+        "your-api-key",
+        "your_api_key",
+        "your-api-key-here",
+        "your_api_key_here",
+        "your-token-here",
+        "your_token_here",
+        "enter_api_key",
+        "placeholder",
+        "changeme",
+        "dummy",
+        "redacted",
+        "todo",
+        "sample",
+        "example",
+    }
+    if v in placeholders:
+        return True
+    if any(p in v for p in ("your-api-key", "your_api_key", "your-key", "insert_key", "<your-")):
+        return True
+    if v.startswith("<") and v.endswith(">"):
+        return True
+    return False
 
 
 class PythonAgentASTVisitor(ast.NodeVisitor):
@@ -43,6 +104,122 @@ class PythonAgentASTVisitor(ast.NodeVisitor):
         self.current_function: Optional[ast.FunctionDef] = None
         self.declared_tool_names: Set[str] = set()
         self.state_graphs: Dict[str, Dict[str, Any]] = {}
+        self._seen_secrets: Set[Tuple[int, str]] = set()
+
+    def _record_secret(
+        self,
+        lineno: int,
+        col_offset: int,
+        secret_val: str,
+        desc: str,
+        custom_message: Optional[str] = None,
+    ) -> None:
+        key = (lineno, secret_val)
+        if key in self._seen_secrets:
+            return
+        self._seen_secrets.add(key)
+
+        line_str = self.lines[lineno - 1] if 1 <= lineno <= len(self.lines) else ""
+        if secret_val in line_str:
+            redacted = secret_val[:4] + "*" * (max(4, len(secret_val) - 6)) + secret_val[-2:]
+            safe_snippet = line_str.replace(secret_val, redacted)
+        else:
+            redacted = secret_val[:4] + "*" * (max(4, len(secret_val) - 6)) + secret_val[-2:]
+            safe_snippet = f'"{redacted}"'
+
+        message = custom_message or f"Hardcoded credential detected ({desc}) in Python source code."
+        self.hardcoded_secrets.append({
+            "file_path": self.file_path,
+            "line_number": lineno,
+            "column": col_offset + 1,
+            "col_offset": col_offset,
+            "description": desc,
+            "snippet": safe_snippet,
+            "message": message,
+        })
+
+    def _scan_comments_for_secrets(self) -> None:
+        """Scan line comments for exposed credential tokens."""
+        for lineno, line in enumerate(self.lines, start=1):
+            stripped = line.strip()
+            if "#" in stripped:
+                comment_part = stripped[stripped.index("#"):]
+                for pattern, desc in SECRET_PATTERNS[:9]:
+                    match = re.search(pattern, comment_part)
+                    if match:
+                        matched_val = match.group(0)
+                        col = stripped.index(matched_val)
+                        self._record_secret(
+                            lineno,
+                            col,
+                            matched_val,
+                            desc,
+                            f"Hardcoded credential detected ({desc}) in Python source comment.",
+                        )
+                        break
+
+    def visit_Assign(self, node: ast.Assign) -> None:
+        self._inspect_assign_secrets(node)
+        self.generic_visit(node)
+
+    def _inspect_assign_secrets(self, node: ast.Assign) -> None:
+        if isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+            val_str = node.value.value
+            for target in node.targets:
+                target_name = self._get_call_name(target)
+                if _is_secret_identifier(target_name) and not _is_placeholder_secret(val_str):
+                    matched_desc = "Assigned Secret Variable"
+                    for pattern, token_desc in SECRET_PATTERNS[:9]:
+                        if re.search(pattern, val_str):
+                            matched_desc = token_desc
+                            break
+                    self._record_secret(node.lineno, node.col_offset, val_str, matched_desc)
+                    break
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
+        if node.value and isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+            val_str = node.value.value
+            target_name = self._get_call_name(node.target)
+            if _is_secret_identifier(target_name) and not _is_placeholder_secret(val_str):
+                matched_desc = "Assigned Secret Variable"
+                for pattern, token_desc in SECRET_PATTERNS[:9]:
+                    if re.search(pattern, val_str):
+                        matched_desc = token_desc
+                        break
+                self._record_secret(node.lineno, node.col_offset, val_str, matched_desc)
+        self.generic_visit(node)
+
+    def visit_Dict(self, node: ast.Dict) -> None:
+        for k, v in zip(node.keys, node.values):
+            if k and isinstance(k, ast.Constant) and isinstance(k.value, str):
+                if _is_secret_identifier(k.value):
+                    if isinstance(v, ast.Constant) and isinstance(v.value, str):
+                        val_str = v.value
+                        if not _is_placeholder_secret(val_str):
+                            matched_desc = "Dictionary Secret Value"
+                            for pattern, token_desc in SECRET_PATTERNS[:9]:
+                                if re.search(pattern, val_str):
+                                    matched_desc = token_desc
+                                    break
+                            lineno = getattr(v, "lineno", node.lineno)
+                            col = getattr(v, "col_offset", node.col_offset)
+                            self._record_secret(lineno, col, val_str, matched_desc)
+        self.generic_visit(node)
+
+    def visit_Constant(self, node: ast.Constant) -> None:
+        if isinstance(node.value, str) and len(node.value) >= 16:
+            for pattern, desc in SECRET_PATTERNS[:9]:
+                match = re.search(pattern, node.value)
+                if match:
+                    matched_val = match.group(0)
+                    self._record_secret(
+                        node.lineno,
+                        node.col_offset,
+                        matched_val,
+                        desc,
+                    )
+                    break
+        self.generic_visit(node)
 
     def get_code_snippet(self, lineno: int, context_lines: int = 1) -> str:
         """Return lines of code around lineno (1-indexed)."""
@@ -313,6 +490,21 @@ class PythonAgentASTVisitor(ast.NodeVisitor):
         # 4. PII flow detection in call arguments
         self._inspect_pii_in_call(node, call_name)
 
+        # 5. Call keyword argument credentials inspection
+        for kw in node.keywords:
+            if kw.arg and _is_secret_identifier(kw.arg):
+                if isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, str):
+                    val_str = kw.value.value
+                    if not _is_placeholder_secret(val_str):
+                        matched_desc = "Call Keyword Secret Argument"
+                        for pattern, token_desc in SECRET_PATTERNS[:9]:
+                            if re.search(pattern, val_str):
+                                matched_desc = token_desc
+                                break
+                        lineno = getattr(kw.value, "lineno", getattr(kw, "lineno", node.lineno))
+                        col = getattr(kw.value, "col_offset", getattr(kw, "col_offset", node.col_offset))
+                        self._record_secret(lineno, col, val_str, matched_desc)
+
         self.generic_visit(node)
 
     def _inspect_prompt_construction(self, node: ast.Call, call_name: str) -> None:
@@ -426,8 +618,10 @@ def parse_python_agent_file(file_path: Path) -> PythonAgentASTVisitor:
         tree = ast.parse(source, filename=str(file_path))
         visitor = PythonAgentASTVisitor(str(file_path), source)
         visitor.visit(tree)
+        visitor._scan_comments_for_secrets()
         return visitor
     except Exception as e:
         # Fallback if syntax error in target file
         visitor = PythonAgentASTVisitor(str(file_path), "")
+        visitor._scan_comments_for_secrets()
         return visitor

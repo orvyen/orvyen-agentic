@@ -243,6 +243,42 @@ class TestOrvyenScanner(unittest.TestCase):
             lines_count = InteractivePrompt.render_widget(text="/scan test", selected_idx=0, utf8=True, width=50)
         self.assertGreater(lines_count, 0)
 
+    def test_hardcoded_secrets_detected_in_python_file(self):
+        """Verify that OAG-003 detects hardcoded credentials directly inside .py files."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            test_file = Path(tmp_dir) / "agent.py"
+            test_file.write_text(
+                'import os\n\n'
+                'OPENAI_API_KEY = "sk-proj-abcdefghijklmnopqrstuvwxyz123456"\n'
+                'ANTHROPIC_KEY = "sk-ant-api03-abcdefghijklmnopqrstuvwxyz"\n'
+                'db_password = "ProductionMasterPassword123!"\n'
+                'safe_env_key = os.getenv("OPENAI_API_KEY")\n'
+                'placeholder_key = "your-api-key-here"\n'
+                'client = Client(api_key="sk-call-param-12345678901234567890")\n'
+                'config = {"auth_token": "custom_auth_token_secret_value_123"}\n',
+                encoding="utf-8"
+            )
+            engine = ScanEngine(Path(tmp_dir))
+            result = engine.run()
+            oag003_findings = [f for f in result.findings if f.rule_id == "OAG-003"]
+            self.assertGreaterEqual(len(oag003_findings), 5)
+
+            # Check that specific keys are caught and redacted
+            snippets = [f.code_snippet for f in oag003_findings]
+            self.assertTrue(any("sk-p" in s and "*" in s for s in snippets))
+            self.assertTrue(any("sk-a" in s and "*" in s for s in snippets))
+            self.assertTrue(any("Prod" in s and "*" in s for s in snippets))
+
+            # Ensure safe lines are not flagged
+            for s in snippets:
+                self.assertNotIn("safe_env_key", s)
+                self.assertNotIn("placeholder_key", s)
+
+            # Ensure all findings have CRITICAL severity
+            for f in oag003_findings:
+                self.assertEqual(f.severity.name, "CRITICAL")
+
 
 if __name__ == "__main__":
     unittest.main()
