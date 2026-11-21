@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./s1.png" alt="Orvyen Agentic" width="100%" />
+</p>
+
 # Orvyen Agentic
 
 > **Static Security & Compliance Scanner for AI Agents**  

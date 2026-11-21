@@ -9,6 +9,8 @@ build/
 htmlcov/
 scan_results/
 scan_results_test/
+scan_results_secure/
+scan_results_vulnerable/
 node_modules/
 *.docx
 log.txt
