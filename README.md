@@ -135,7 +135,7 @@ orvyen-agentic scan . --fail-on LOW
 Running `orvyen-agentic` without arguments launches an interactive session with a slash-command menu.
 
 ```
-orvyen v0.3.2 · agent security & compliance
+orvyen v0.3.3 · agent security & compliance
 
 › _
 ```

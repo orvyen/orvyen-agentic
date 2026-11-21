@@ -1,5 +1,5 @@
 """
-Minimal, quiet, and polished terminal UX for Orvyen Agentic (v0.3.2).
+Minimal, quiet, and polished terminal UX for Orvyen Agentic (v0.3.3).
 Engineered to Claude Code / GitHub CLI standards:
 - Grayscale hierarchy + single accent green (#4ade80) / red (#f87171) for errors.
 - No emojis, no ASCII banners, no box borders, no gradients.

@@ -1,6 +1,6 @@
 {
   "name": "@orvyen/agentic",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Static Security & Compliance Scanner for AI Agents (LangChain, LangGraph, CrewAI, MCP)",
   "keywords": [
     "ai-agent-security",
@@ -43,7 +43,8 @@
     "bin/",
     "orvyen/",
     "LICENSE",
-    "README.md"
+    "README.md",
+    "s1.png"
   ],
   "engines": {
     "node": ">=18"
