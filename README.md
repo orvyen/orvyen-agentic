@@ -1,162 +1,185 @@
-<p align="center">
-  <img src="./sc1.png" alt="Orvyen Agentic - Static Security & Compliance Scanning for AI Agents" width="100%" />
-</p>
-
 # Orvyen Agentic
 
-> **Static Security & Compliance Scanning for AI Agents**  
-> *LangChain &bull; LangGraph &bull; CrewAI &bull; Model Context Protocol (MCP)*
+> **Static Security & Compliance Scanner for AI Agents**  
+> LangChain · LangGraph · CrewAI · Model Context Protocol (MCP)
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![PyPI version](https://img.shields.io/pypi/v/orvyen-agentic.svg?color=blue)](https://pypi.org/project/orvyen-agentic/)
 [![npm version](https://img.shields.io/npm/v/@orvyen/agentic.svg?color=red)](https://www.npmjs.com/package/@orvyen/agentic)
-[![tests](https://img.shields.io/badge/tests-25%2F25-brightgreen.svg)](https://github.com/orvyen/orvyen-agentic)
-[![time](https://img.shields.io/badge/time-7.1ms-success.svg)](https://github.com/orvyen/orvyen-agentic)
+[![tests](https://img.shields.io/badge/tests-26%2F26-brightgreen.svg)](https://github.com/orvyen/orvyen-agentic)
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![OWASP LLM Top 10](https://img.shields.io/badge/OWASP-LLM_Top_10-orange)](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
-[![IMDA Governance](https://img.shields.io/badge/Singapore-IMDA_Agentic_AI_(May_2026)-green)](https://www.imda.gov.sg/)
+[![IMDA Governance](https://img.shields.io/badge/Singapore-IMDA_Agentic_AI_v1.5-green)](https://www.imda.gov.sg/)
 
-**Orvyen Agentic** is a pre-deployment static analysis security and compliance scanner purpose-built for modern AI agent architectures. While 76% of existing AI security solutions operate at runtime (inspecting prompts downstream after deployment), Orvyen Agentic operates **pre-deployment in CI/CD and local development** — finding security flaws in agent code, prompt templates, tool privileges, and MCP server manifests before code ever merges.
-
----
-
-## Key Features
-
-- **Agent-Aware AST Parsing**: Deep inspection of Python agent graphs and orchestrations across **LangChain**, **LangGraph**, and **CrewAI**.
-- **Model Context Protocol (MCP) Scanning**: Static inspection of `claude_desktop_config.json` and `mcp.json` server configurations, detecting shell capabilities, plaintext credentials, and orphaned gateways.
-- **Sub-100ms Performance**: Zero external runtime dependencies; executes blazing-fast static checks in milliseconds using Python's standard library.
-- **Agent Bill of Materials (AIBOM)**: Auto-compiles an auditable inventory of every tool, privilege tier, model, and external data flow.
-- **Regulatory & Governance Scorecards**:
-  - **Singapore IMDA**: Model AI Governance Framework for Agentic AI (May 2026 v1.5 - 4 Pillars).
-  - **MAS Guidelines**: Monetary Authority of Singapore AI Risk Management Guidelines.
-  - **OWASP LLM Top 10**: Direct vulnerability mapping to the official standard.
-- **Multi-Format Reporting**: Colorized terminal output with code snippets, machine-readable JSON for CI/CD, and interactive self-contained HTML dashboards.
+Orvyen Agentic is a pre-deployment static analysis tool for AI agent codebases. It inspects Python agent graphs, prompt templates, tool privilege configurations, and MCP server manifests — surfacing security flaws and compliance gaps before code ships.
 
 ---
 
-## The Initial 8-Rule Security Pack
+## Features
 
-| Rule ID | Rule Name | Severity | OWASP Mapping | Singapore IMDA Pillar |
+- **Agent-Aware AST Parsing** — Deep structural inspection of agent graphs and task orchestrations across LangChain, LangGraph, and CrewAI.
+- **MCP Configuration Scanning** — Static analysis of `mcp.json` and `claude_desktop_config.json` server configs, detecting shell capabilities, plaintext credentials, and orphaned gateways.
+- **Sub-100ms Execution** — Zero external runtime dependencies. All checks run via Python's standard library.
+- **Agent Bill of Materials (AIBOM)** — Auditable inventory of every tool, privilege tier, model, and external data flow in the agent system.
+- **Governance Scorecards**:
+  - Singapore IMDA Model AI Governance Framework for Agentic AI (v1.5, May 2026 — 4 Pillars)
+  - Monetary Authority of Singapore (MAS) AI Risk Management Guidelines
+  - OWASP LLM Top 10 (direct vulnerability mapping)
+- **CI/CD Integration** — Exit code gates on severity threshold, SARIF 2.1.0 output for GitHub Advanced Security, and machine-readable JSON.
+
+---
+
+## Security Rules
+
+| Rule ID | Name | Severity | OWASP LLM Top 10 | IMDA Pillar |
 | :--- | :--- | :--- | :--- | :--- |
-| **`OAG-001`** | **Tool Over-Permissioning** | `CRITICAL` / `HIGH` | LLM06: Excessive Agency | Pillar 3: Technical Controls |
-| **`OAG-002`** | **Prompt Injection Surface** | `HIGH` | LLM01: Prompt Injection | Pillar 1: Assess & Bound Risk |
-| **`OAG-003`** | **Hardcoded Secrets & Keys** | `CRITICAL` | LLM02: Sensitive Information | Pillar 3: Technical Controls |
-| **`OAG-004`** | **Unfiltered PII Flow** | `HIGH` | LLM02: Sensitive Information | Pillar 3: Technical Controls |
-| **`OAG-005`** | **Unbounded Recursion Cycles**| `HIGH` | LLM10: Unbounded Consumption| Pillar 1: Assess & Bound Risk |
-| **`OAG-006`** | **Orphaned Tools & MCPs** | `MEDIUM` / `LOW` | LLM06: Excessive Agency | Pillar 2: Human Accountability |
-| **`OAG-007`** | **Missing Rate / Step Limits**| `MEDIUM` | LLM10: Unbounded Consumption| Pillar 3: Technical Controls |
-| **`OAG-008`** | **Unaudited State Mutations** | `HIGH` | LLM06: Excessive Agency | Pillar 2: Human Accountability |
+| `OAG-001` | Tool Over-Permissioning & Dangerous Execution Scope | `CRITICAL` | LLM06: Excessive Agency | Pillar 3: Technical Controls |
+| `OAG-002` | Prompt Injection Surface | `HIGH` | LLM01: Prompt Injection | Pillar 1: Assess & Bound Risk |
+| `OAG-003` | Hardcoded Credentials & API Keys | `CRITICAL` | LLM02: Sensitive Information | Pillar 3: Technical Controls |
+| `OAG-004` | Unfiltered PII Data Flow | `HIGH` | LLM02: Sensitive Information | Pillar 3: Technical Controls |
+| `OAG-005` | Unbounded Recursion & Cycles | `HIGH` | LLM10: Unbounded Consumption | Pillar 1: Assess & Bound Risk |
+| `OAG-006` | Orphaned Tools & Disconnected MCPs | `MEDIUM` | LLM06: Excessive Agency | Pillar 2: Human Accountability |
+| `OAG-007` | Missing Rate Limits & Step Caps | `MEDIUM` | LLM10: Unbounded Consumption | Pillar 3: Technical Controls |
+| `OAG-008` | Unaudited State-Modifying Tool Actions | `HIGH` | LLM06: Excessive Agency | Pillar 2: Human Accountability |
+| `OAG-009` | Insecure MCP Transport (HTTP/SSE without TLS) | `HIGH` | LLM09: Misinformation | Pillar 3: Technical Controls |
+| `OAG-010` | Missing Human-in-the-Loop for Destructive Actions | `HIGH` | LLM06: Excessive Agency | Pillar 2: Human Accountability |
+| `OAG-011` | Insecure Model Configuration | `MEDIUM` | LLM09: Misinformation | Pillar 1: Assess & Bound Risk |
+| `OAG-012` | Missing Output Validation & Sanitization | `MEDIUM` | LLM05: Improper Output Handling | Pillar 3: Technical Controls |
 
 ---
 
-## Quickstart
+## Installation
 
-### Installation
-
-**Run instantly via npx (zero installation):**
+**Zero-install via npx:**
 ```bash
 npx @orvyen/agentic scan .
 ```
 
-**Or install globally via npm:**
+**Global npm install:**
 ```bash
 npm install -g @orvyen/agentic
 ```
 
-**Or install via pip / Python:**
+**Python / pip:**
 ```bash
 pip install orvyen-agentic
 ```
 
-*Note: Orvyen Agentic runs natively on Python 3.10+ with zero external runtime dependencies.*
+Requires Python 3.10+. No external runtime dependencies.
 
 ---
 
 ## CLI Usage
 
-<p align="center">
-  <img src="./sc3.png" alt="Orvyen Agentic Interactive CLI Terminal Scanner" width="100%" />
-</p>
-
-### Basic Scan
-
-Scan the current working directory:
+### Scanning
 
 ```bash
+# Scan current directory
 orvyen-agentic scan .
-```
 
-Or run directly via Python module:
+# Scan a specific path
+orvyen-agentic scan ./my-agent-repo
 
-```bash
+# Run via Python module
 python -m orvyen.cli scan ./my-agent-repo
 ```
 
 ### Output Formats
 
+| Format | Flag | Description |
+| :--- | :--- | :--- |
+| Terminal | `--format terminal` | Default. Minimal interactive terminal UX. |
+| JSON | `--format json` | Machine-readable findings for CI/CD pipelines. |
+| SARIF 2.1.0 | `--format sarif` | For GitHub Advanced Security / CodeQL integration. |
+| AIBOM | `--format aibom` | Agent Bill of Materials in JSON and Markdown. |
+| All (free tier) | `--format all` | Produces JSON, SARIF, and AIBOM simultaneously. |
+| PDF *(Pro)* | `--format pdf` | Audit-grade PDF report. Requires a Pro license. |
+| HTML *(Pro)* | `--format html` | Interactive HTML dashboard. Requires a Pro license. |
+
 ```bash
-# Generate Terminal, JSON, and HTML reports simultaneously
-orvyen-agentic scan ./my-agent-repo --format all --output-dir ./scan_results
+# Export JSON, SARIF, and AIBOM to a directory
+orvyen-agentic scan . --format all --output-dir ./reports
 
-# Compact view: single-line output (ideal for fast developer loops & IDE terminals)
-orvyen-agentic scan ./my-agent-repo --compact
+# Export SARIF only (for GitHub Advanced Security)
+orvyen-agentic scan . --format sarif --output-dir ./reports
 
-# Export only the Agent Bill of Materials (AIBOM)
-orvyen-agentic scan ./my-agent-repo --format aibom --output-dir ./audit_package
-
-# Print AIBOM Markdown directly to stdout
-orvyen-agentic scan ./my-agent-repo --aibom-only
+# Pro tier: generate a PDF audit report
+orvyen-agentic scan . --format pdf --license-key OAG-PRO.xxx --output-dir ./reports
 ```
 
 ### CI/CD Failure Gates
 
-Enforce build failure if any vulnerability of a specified severity is discovered:
-
 ```bash
-# Exit code 1 if any HIGH or CRITICAL vulnerability is found
+# Fail the build if any HIGH or CRITICAL finding is detected
 orvyen-agentic scan . --fail-on HIGH
 
-# Strict mode: fail on any finding (LOW, MEDIUM, HIGH, CRITICAL)
+# Fail on any finding regardless of severity
 orvyen-agentic scan . --fail-on LOW
 ```
 
+### Flags
+
+| Flag | Description |
+| :--- | :--- |
+| `--format <fmt>` | Output format: `terminal`, `json`, `sarif`, `aibom`, `all`, `pdf`, `html` |
+| `--output-dir <dir>` | Directory for file-based report output |
+| `--fail-on <severity>` | Exit 1 if any finding meets or exceeds this severity level |
+| `--no-anim` | Disable spinner animation (useful for CI/CD log output) |
+| `--no-interactive` | Non-interactive mode; disable prompt and slash-command menu |
+| `--license-key <key>` | Pro license key for PDF and HTML report formats |
+
 ---
 
-## Executive Compliance & Risk Dashboard
+## Interactive Mode
 
-<p align="center">
-  <img src="./sc2.png" alt="Orvyen Agentic Compliance Scorecards and Interactive Terminal Dashboard" width="100%" />
-</p>
+Running `orvyen-agentic` without arguments launches an interactive session with a slash-command menu.
+
+```
+orvyen v0.3.2 · agent security & compliance
+
+› _
+```
+
+Type `/` to open the command menu:
+
+```
+› /scan        scan codebase pre-deploy
+  /abom        bill of materials & mcp inventory
+  /compliance  imda & owasp matrix
+  /secure      benchmark · secure fixture
+  /vulnerable  benchmark · vulnerable fixture
+```
+
+Navigate with `↑` / `↓` arrow keys, select with `Enter`. Each command maps to a real scan or report operation.
 
 ---
 
 ## Agent Bill of Materials (AIBOM)
 
-Every scan generates an **Agent Bill of Materials (AIBOM)** detailing:
-1. **Agent Metadata & Frameworks**: Framework versions detected (LangChain, LangGraph, CrewAI, MCP).
-2. **Tool Capability Matrix**: Tool name, framework, privilege tier (`READ`, `WRITE`, `EXECUTE`, `ADMIN`), dangerous sink identification, bound status, and audit logging status.
-3. **Model Context Protocol (MCP) Manifest**: Connected servers, CLI binaries, execution arguments, and environment configurations.
-4. **Governance Scorecards**: Complete status breakdowns for Singapore IMDA 4-Pillars and OWASP LLM Top 10.
+Each scan produces an AIBOM documenting:
+
+1. **Agent Metadata** — Detected frameworks and versions (LangChain, LangGraph, CrewAI, MCP).
+2. **Tool Capability Matrix** — Tool name, framework, privilege tier (`READ` / `WRITE` / `EXECUTE` / `ADMIN`), dangerous sink flag, bound status, and audit logging status.
+3. **MCP Manifest** — Connected servers, CLI binaries, execution arguments, and environment variable configurations.
+4. **Governance Scorecards** — Pass/fail breakdown for Singapore IMDA 4-Pillar framework and OWASP LLM Top 10.
 
 ---
 
-## CI/CD Pipeline Integration
+## CI/CD Integration
 
-### GitHub Actions Workflow
-
-Add `.github/workflows/orvyen_agentic.yml`:
+Add `.github/workflows/orvyen.yml` to your repository:
 
 ```yaml
 name: Orvyen Agentic Security Scan
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  agent-security-scan:
+  agent-security:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -169,14 +192,14 @@ jobs:
       - name: Install Orvyen Agentic
         run: pip install orvyen-agentic
 
-      - name: Run Static Security & Compliance Scan
+      - name: Run Security & Compliance Scan
         run: |
           orvyen-agentic scan . \
             --format all \
             --output-dir ./reports \
             --fail-on HIGH
 
-      - name: Upload Security Report & AIBOM
+      - name: Upload Reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -189,31 +212,32 @@ jobs:
 ## Architecture
 
 ```
-                    Target Agent Codebase & Manifests
-                                    │
-                                    ▼
-       ┌─────────────────────────────────────────────────────────┐
-       │                      Parser Layer                       │
-       │  • PythonAgentASTVisitor (Tools, Prompts, Cycles)       │
-       │  • MCPManifestParser (Servers, Capabilities, Secrets)   │
-       │  • ConfigFileScanner (.env, YAML, JSON token detector)  │
-       └────────────────────────────┬────────────────────────────┘
-                                    │
-                                    ▼
-       ┌─────────────────────────────────────────────────────────┐
-       │                       Rule Engine                       │
-       │  • Evaluates OAG-001 to OAG-008 across intermediate IR  │
-       │  • Categorizes findings by severity & framework         │
-       └────────────────────────────┬────────────────────────────┘
-                                    │
-                    ┌───────────────┴───────────────┐
-                    ▼                               ▼
-       ┌─────────────────────────┐     ┌─────────────────────────┐
-       │   Developer Reporters   │     │    Compliance Engine    │
-       │ • Rich Terminal Console │     │ • AIBOM Compiler        │
-       │ • Machine-readable JSON │     │ • Singapore IMDA Matrix │
-       │ • Interactive HTML Dash │     │ • OWASP LLM Top 10      │
-       └─────────────────────────┘     └─────────────────────────┘
+                  Target Agent Codebase & Manifests
+                                  │
+                                  ▼
+     ┌─────────────────────────────────────────────────────────┐
+     │                       Parser Layer                      │
+     │  • PythonAgentASTVisitor  (tools, prompts, cycles)      │
+     │  • MCPManifestParser      (servers, capabilities, creds)│
+     │  • ConfigFileScanner      (.env, YAML, JSON tokens)     │
+     └────────────────────────────┬────────────────────────────┘
+                                  │
+                                  ▼
+     ┌─────────────────────────────────────────────────────────┐
+     │                       Rule Engine                       │
+     │  • Evaluates OAG-001 through OAG-012                    │
+     │  • Categorizes findings by severity and framework       │
+     └────────────────────────────┬────────────────────────────┘
+                                  │
+                  ┌───────────────┴───────────────┐
+                  ▼                               ▼
+     ┌─────────────────────────┐     ┌─────────────────────────┐
+     │    Developer Reporters  │     │    Compliance Engine    │
+     │  • Terminal (minimal)   │     │  • AIBOM Compiler       │
+     │  • JSON  (CI/CD)        │     │  • Singapore IMDA v1.5  │
+     │  • SARIF 2.1.0          │     │  • OWASP LLM Top 10     │
+     │  • AIBOM JSON + MD      │     │  • MAS Guidelines       │
+     └─────────────────────────┘     └─────────────────────────┘
 ```
 
 ---
@@ -224,9 +248,11 @@ jobs:
 python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
+26 tests covering rule detection, AST parsing, MCP manifest inspection, compliance scoring, and reporter output.
+
 ---
 
-## License & Attribution
+## License
 
-Developed by **Orvyen**.  
-Licensed under the Apache-2.0 License.
+Developed by [Orvyen](https://orvyen.com).  
+Licensed under the [Apache 2.0 License](https://opensource.org/licenses/Apache-2.0).

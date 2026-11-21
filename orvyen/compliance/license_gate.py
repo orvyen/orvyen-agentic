@@ -1,8 +1,8 @@
 """
 License gate for Orvyen Agentic compliance features.
 
-Free tier:  terminal console, JSON report, HTML dashboard, AIBOM JSON.
-Paid tier:  AIBOM Markdown with IMDA/OWASP clause annotations, PDF export.
+Free / CLI tier: terminal console, JSON report, SARIF, AIBOM JSON.
+Pro / Paid tier:  Audit-ready PDF export, HTML dashboard, licensed AIBOM Markdown clause mapping.
 
 License keys are validated offline via a simple HMAC-SHA256 checksum against
 a hard-coded public salt so that validation requires no network call and

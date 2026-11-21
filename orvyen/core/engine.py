@@ -49,15 +49,15 @@ class ScanEngine:
     def __init__(self, target_path: Path):
         self.target_path = target_path.resolve()
 
-    def run(self) -> ScanResult:
+    def prepare_context(self) -> tuple[ScanContext, List[Path]]:
+        """Collect scan targets and initialize context."""
         ctx = ScanContext(target_path=self.target_path)
         all_files = self._collect_files()
         ctx.all_files = all_files
+        return ctx, all_files
 
-        # Measure strictly core engine static analysis and rule evaluation time
-        start_time = time.perf_counter()
-
-        # 1. Parse files
+    def parse_files(self, ctx: ScanContext, all_files: List[Path]) -> None:
+        """Parse Python AST, MCP manifests, and secret configs."""
         for file_path in all_files:
             rel_name = file_path.name.lower()
 
@@ -91,19 +91,29 @@ class ScanEngine:
                 findings = cfg_scanner.scan()
                 ctx.config_findings.extend(findings)
 
-        # 2. Evaluate all rules
+    def evaluate_rules(self, ctx: ScanContext) -> List[Finding]:
+        """Evaluate all registered security and compliance rules."""
         rules = RuleRegistry.get_all_rules()
         all_findings = []
         for rule in rules:
             try:
                 rule_findings = rule.evaluate(ctx)
                 all_findings.extend(rule_findings)
-            except Exception as e:
-                # Fault tolerant rule execution
+            except Exception:
                 pass
-
-        # Sort findings by severity level descending
         all_findings.sort(key=lambda f: f.severity.level, reverse=True)
+        return all_findings
+
+    def run(self) -> ScanResult:
+        ctx, all_files = self.prepare_context()
+        start_time = time.perf_counter()
+
+        self.parse_files(ctx, all_files)
+        parse_ms = (time.perf_counter() - start_time) * 1000
+
+        rules_start = time.perf_counter()
+        all_findings = self.evaluate_rules(ctx)
+        rules_ms = (time.perf_counter() - rules_start) * 1000
 
         duration_ms = (time.perf_counter() - start_time) * 1000
 
@@ -116,6 +126,10 @@ class ScanEngine:
             agents=ctx.agents,
             mcp_servers=ctx.mcp_servers,
             edges=ctx.edges,
+            phase_timings={
+                "scanning_files": parse_ms,
+                "evaluating_rules": rules_ms,
+            },
         )
 
         return result

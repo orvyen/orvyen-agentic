@@ -157,6 +157,7 @@ class ScanResult:
     mcp_servers: List[MCPServer] = field(default_factory=list)
     edges: List[GraphEdge] = field(default_factory=list)
     aibom: Optional[Dict[str, Any]] = None
+    phase_timings: Dict[str, float] = field(default_factory=dict)
 
     @property
     def critical_count(self) -> int:

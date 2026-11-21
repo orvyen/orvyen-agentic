@@ -10,23 +10,24 @@ import sys
 from pathlib import Path
 
 from orvyen import __version__
-from orvyen.core.models import Severity
+from orvyen.core.models import Severity, ScanResult
 from orvyen.core.engine import ScanEngine
 from orvyen.compliance.aibom import AIBOMCompiler
 from orvyen.compliance.license_gate import is_valid_license
 from orvyen.compliance.imda_matrix import IMDAComplianceEvaluator
 from orvyen.compliance.owasp_matrix import OWASPComplianceEvaluator
-from orvyen.reporters.console import ConsoleReporter, InteractivePrompt
 from orvyen.reporters.json_reporter import JSONReporter
 from orvyen.reporters.html_reporter import HTMLReporter
 from orvyen.reporters.pdf_reporter import PDFReporter
 from orvyen.reporters.sarif_reporter import SARIFReporter
-
-# Terminal styling primitives
 from orvyen.reporters.console import (
+    ConsoleReporter,
+    InteractivePrompt,
+    run_spinner_phase,
     fg, bg, WHITE, GRAY_MUTED, GRAY_DARK, GRAY_LIGHT,
     GREEN_ACCENT, CYAN_ACCENT, RED_ACCENT, AMBER_ACCENT,
-    RESET, BOLD, DIM,
+    PRIMARY, DIM, FAINT, GREEN, RED, ACCENT,
+    RESET, BOLD,
 )
 
 CYAN = CYAN_ACCENT
@@ -47,6 +48,12 @@ def build_parser() -> argparse.ArgumentParser:
         version=f"orvyen-agentic v{__version__}",
     )
 
+    parser.add_argument(
+        "--no-anim",
+        action="store_true",
+        help="Disable terminal animations and spinners (run phases as plain static text)",
+    )
+
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
 
     # scan subcommand
@@ -59,10 +66,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     scan_parser.add_argument(
         "-f", "--format",
-        choices=["terminal", "json", "html", "aibom", "pdf", "sarif", "all"],
+        choices=["terminal", "json", "sarif", "aibom", "html", "pdf", "all"],
         default="terminal",
         type=str.lower,
-        help="Output report format (default: terminal)",
+        help="Output report format (default: terminal; CI/CD formats: json, sarif, aibom; Pro: pdf, html)",
     )
     scan_parser.add_argument(
         "-o", "--output-dir",
@@ -110,6 +117,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Disable interactive mode and exit immediately after scan",
     )
     scan_parser.add_argument(
+        "--no-anim",
+        action="store_true",
+        help="Disable terminal animations and spinners (run phases as plain static text)",
+    )
+    scan_parser.add_argument(
         "-q", "--quiet",
         action="store_true",
         help="Suppress terminal decoration and summary banners",
@@ -124,29 +136,124 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def execute_phased_scan(
+    target_path: Path,
+    no_anim: bool = False,
+    quiet: bool = False,
+    is_interactive: bool = False,
+    print_header: bool = True,
+) -> tuple[ScanResult, Dict[str, Any], Dict[str, Any]]:
+    """
+    Executes scan across 3 minimal Claude Code-style phases:
+    1. scanning {N} files
+    2. evaluating 12 rules
+    3. checking compliance
+    Returns (result, imda, owasp).
+    """
+    engine = ScanEngine(target_path)
+    ctx, all_files = engine.prepare_context()
+    num_files = len(all_files)
+
+    # Print header on first launch or when target changes (controlled by caller)
+    if not quiet and print_header and not ConsoleReporter._header_printed:
+        ConsoleReporter.print_header(target_path=str(target_path), files_count=num_files)
+
+    # Print prompt line (always, so user sees which command ran)
+    if not quiet:
+        ConsoleReporter.print_prompt("/scan")
+
+    # Phase 1: scanning files
+    def p1_action():
+        engine.parse_files(ctx, all_files)
+        return ctx
+
+    if quiet:
+        p1_action()
+        t1 = 0.0
+    else:
+        _, t1 = run_spinner_phase(
+            f"scanning {num_files} files",
+            p1_action,
+            no_anim=no_anim,
+            min_visual_ms=600,
+        )
+
+    # Phase 2: evaluating 12 rules
+    def p2_action():
+        return engine.evaluate_rules(ctx)
+
+    if quiet:
+        all_findings = p2_action()
+        t2 = 0.0
+    else:
+        all_findings, t2 = run_spinner_phase(
+            "evaluating 12 rules",
+            p2_action,
+            no_anim=no_anim,
+            min_visual_ms=800,
+        )
+
+    # Phase 3: checking compliance
+    def p3_action():
+        imda = IMDAComplianceEvaluator.evaluate(all_findings)
+        owasp = OWASPComplianceEvaluator.evaluate(all_findings)
+        return imda, owasp
+
+    if quiet:
+        (imda, owasp) = p3_action()
+        t3 = 0.0
+    else:
+        (imda, owasp), t3 = run_spinner_phase(
+            "checking compliance",
+            p3_action,
+            no_anim=no_anim,
+            min_visual_ms=450,
+        )
+
+    total_dur_ms = t1 + t2 + t3
+    result = ScanResult(
+        target_path=str(engine.target_path),
+        files_scanned=num_files,
+        duration_ms=total_dur_ms,
+        findings=all_findings,
+        tools=ctx.tools,
+        agents=ctx.agents,
+        mcp_servers=ctx.mcp_servers,
+        edges=ctx.edges,
+        phase_timings={
+            "scanning_files": t1,
+            "evaluating_rules": t2,
+            "checking_compliance": t3,
+        },
+    )
+    result.aibom = AIBOMCompiler.compile(result)
+
+    return result, imda, owasp
+
+
 def interactive_loop(
     initial_target: Path,
     min_sev: Severity,
-    is_compact: bool,
-    is_fancy: bool,
+    is_compact: bool = False,
+    is_fancy: bool = True,
     license_key: str | None = None,
+    no_anim: bool = False,
 ) -> int:
-    """Keeps the user in the interactive terminal session with live in-box prompt and dropdown."""
+    """Keeps the user in the interactive terminal session with live minimal slash menu."""
     curr_target = initial_target
 
     while True:
         try:
-            if is_fancy and sys.stdin.isatty():
+            if sys.stdin.isatty():
                 raw = InteractivePrompt.ask(initial_text="/scan", utf8=True)
             else:
-                raw = input(f"  {GRAY_MUTED}>{RESET} ").strip()
+                raw = input(f"  {DIM}›{RESET} ").strip()
         except (KeyboardInterrupt, EOFError):
-            print(f"\n{GRAY_MUTED}Exiting Orvyen Agentic. Goodbye!{RESET}\n")
-            return 0
+            print(f"\n{DIM}cancelled{RESET}\n")
+            return 130
 
-        cmd = raw.lower()
+        cmd = raw.lower().strip()
         if cmd in ("exit", "quit", "q", "/exit", ":q"):
-            print(f"\n{GRAY_MUTED}Exiting Orvyen Agentic. Goodbye!{RESET}\n")
             return 0
 
         elif cmd in ("", "/scan", "scan") or cmd.startswith(("/scan ", "scan ")):
@@ -155,87 +262,103 @@ def interactive_loop(
                 new_target = Path(parts[1].strip())
                 if new_target.exists():
                     curr_target = new_target
+                    # New target — reset header so it shows new path
+                    ConsoleReporter._header_printed = False
                 else:
-                    print(f"  {RED_ACCENT}Error: Path '{parts[1].strip()}' does not exist.{RESET}")
+                    print(f"  {RED}Error: Path '{parts[1].strip()}' does not exist.{RESET}\n")
                     continue
 
-            if is_fancy:
-                os.system("cls" if os.name == "nt" else "clear")
-
-            engine = ScanEngine(curr_target)
-            res = engine.run()
-            res.aibom = AIBOMCompiler.compile(res)
-            ConsoleReporter.print_result(res, min_severity=min_sev, compact=is_compact, fancy=is_fancy)
+            result, imda, owasp = execute_phased_scan(
+                curr_target,
+                no_anim=no_anim,
+                quiet=False,
+                is_interactive=True,
+                print_header=True,
+            )
+            ConsoleReporter.print_verdict(result, min_severity=min_sev)
+            ConsoleReporter.print_summary(result, imda, owasp, no_anim=no_anim)
+            ConsoleReporter.print_next_step(result, command_type="scan")
 
         elif cmd in ("/secure", "secure"):
-            if is_fancy:
-                os.system("cls" if os.name == "nt" else "clear")
-            curr_target = Path("tests/fixtures/secure_agent")
-            if not curr_target.exists():
-                curr_target = Path(__file__).parent.parent / "tests" / "fixtures" / "secure_agent"
-            if not curr_target.exists():
-                print(f"  {RED_ACCENT}Error: Fixture directory 'tests/fixtures/secure_agent' not found.{RESET}")
+            fixture = Path("tests/fixtures/secure_agent")
+            if not fixture.exists():
+                fixture = Path(__file__).parent.parent / "tests" / "fixtures" / "secure_agent"
+            if not fixture.exists():
+                print(f"  {RED}Error: Fixture 'tests/fixtures/secure_agent' not found.{RESET}\n")
                 continue
-            engine = ScanEngine(curr_target)
-            res = engine.run()
-            res.aibom = AIBOMCompiler.compile(res)
-            ConsoleReporter.print_result(res, min_severity=min_sev, compact=is_compact, fancy=is_fancy)
+            curr_target = fixture
+            # Reset header so it re-prints with the new target path
+            ConsoleReporter._header_printed = False
+            result, imda, owasp = execute_phased_scan(
+                curr_target,
+                no_anim=no_anim,
+                quiet=False,
+                is_interactive=True,
+                print_header=True,
+            )
+            ConsoleReporter.print_verdict(result, min_severity=min_sev)
+            ConsoleReporter.print_summary(result, imda, owasp, no_anim=no_anim)
+            ConsoleReporter.print_next_step(result, command_type="scan")
 
         elif cmd in ("/vulnerable", "vulnerable"):
-            if is_fancy:
-                os.system("cls" if os.name == "nt" else "clear")
-            curr_target = Path("tests/fixtures/vulnerable_agent")
-            if not curr_target.exists():
-                curr_target = Path(__file__).parent.parent / "tests" / "fixtures" / "vulnerable_agent"
-            if not curr_target.exists():
-                print(f"  {RED_ACCENT}Error: Fixture directory 'tests/fixtures/vulnerable_agent' not found.{RESET}")
+            fixture = Path("tests/fixtures/vulnerable_agent")
+            if not fixture.exists():
+                fixture = Path(__file__).parent.parent / "tests" / "fixtures" / "vulnerable_agent"
+            if not fixture.exists():
+                print(f"  {RED}Error: Fixture 'tests/fixtures/vulnerable_agent' not found.{RESET}\n")
                 continue
-            engine = ScanEngine(curr_target)
-            res = engine.run()
-            res.aibom = AIBOMCompiler.compile(res)
-            ConsoleReporter.print_result(res, min_severity=min_sev, compact=is_compact, fancy=is_fancy)
+            curr_target = fixture
+            # Reset header so it re-prints with the new target path
+            ConsoleReporter._header_printed = False
+            result, imda, owasp = execute_phased_scan(
+                curr_target,
+                no_anim=no_anim,
+                quiet=False,
+                is_interactive=True,
+                print_header=True,
+            )
+            ConsoleReporter.print_verdict(result, min_severity=min_sev)
+            ConsoleReporter.print_summary(result, imda, owasp, no_anim=no_anim)
+            ConsoleReporter.print_next_step(result, command_type="scan")
 
-        elif cmd in ("/aibom", "aibom"):
-            if is_fancy:
-                os.system("cls" if os.name == "nt" else "clear")
-                ConsoleReporter.print_header(None, fancy=is_fancy)
+        elif cmd in ("/abom", "abom", "/aibom", "aibom"):
             engine = ScanEngine(curr_target)
             res = engine.run()
             res.aibom = AIBOMCompiler.compile(res)
-            ConsoleReporter.print_aibom(res.aibom, utf8=is_fancy)
+            ConsoleReporter.print_aibom(res.aibom)
 
         elif cmd in ("/compliance", "compliance"):
-            if is_fancy:
-                os.system("cls" if os.name == "nt" else "clear")
-                ConsoleReporter.print_header(None, fancy=is_fancy)
             engine = ScanEngine(curr_target)
             res = engine.run()
             imda = IMDAComplianceEvaluator.evaluate(res.findings)
             owasp = OWASPComplianceEvaluator.evaluate(res.findings)
-            ConsoleReporter.print_compliance(imda, owasp, utf8=is_fancy)
+            ConsoleReporter.print_compliance(imda, owasp)
 
         elif cmd in ("/help", "help"):
-            if is_fancy:
-                os.system("cls" if os.name == "nt" else "clear")
-                ConsoleReporter.print_header(None, fancy=is_fancy)
-            ConsoleReporter.print_help(utf8=is_fancy)
+            ConsoleReporter.print_help()
 
         elif cmd in ("/clear", "clear", "cls"):
             os.system("cls" if os.name == "nt" else "clear")
-            ConsoleReporter.print_header(None, fancy=is_fancy)
+            ConsoleReporter._header_printed = False
+            ConsoleReporter.print_header(target_path=str(curr_target))
 
         else:
             potential = Path(raw)
             if potential.exists():
                 curr_target = potential
-                if is_fancy:
-                    os.system("cls" if os.name == "nt" else "clear")
-                engine = ScanEngine(curr_target)
-                res = engine.run()
-                res.aibom = AIBOMCompiler.compile(res)
-                ConsoleReporter.print_result(res, min_severity=min_sev, compact=is_compact, fancy=is_fancy)
+                ConsoleReporter._header_printed = False
+                result, imda, owasp = execute_phased_scan(
+                    curr_target,
+                    no_anim=no_anim,
+                    quiet=False,
+                    is_interactive=True,
+                    print_header=True,
+                )
+                ConsoleReporter.print_verdict(result, min_severity=min_sev)
+                ConsoleReporter.print_summary(result, imda, owasp, no_anim=no_anim)
+                ConsoleReporter.print_next_step(result, command_type="scan")
             else:
-                print(f"  {YELLOW}Unknown command '{raw}'. Type /help for available commands or press Ctrl+C to exit.{RESET}")
+                print(f"  {DIM}Unknown command '{raw}'. Type /help for available commands or press Ctrl+C to exit.{RESET}\n")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -276,6 +399,8 @@ def main(argv: list[str] | None = None) -> int:
             args.interactive = None
         if not hasattr(args, "no_interactive"):
             args.no_interactive = False
+        if not hasattr(args, "no_anim"):
+            args.no_anim = False
         if not hasattr(args, "quiet"):
             args.quiet = False
 
@@ -284,22 +409,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Error: Target path '{args.target}' does not exist.", file=sys.stderr)
         return 2
 
-    # Execute Scan
-    engine = ScanEngine(target_path)
-    result = engine.run()
-
-    # Compile AIBOM
-    result.aibom = AIBOMCompiler.compile(result)
-
-    min_sev = Severity[args.min_severity]
-    out_dir = Path(args.output_dir)
-
-    # If user just wants AIBOM
-    if args.aibom_only:
-        license_key = getattr(args, "license_key", None)
-        md_aibom = AIBOMCompiler.to_markdown(result.aibom, license_key=license_key)
-        print(md_aibom)
-        return 0
+    no_anim = (
+        getattr(args, "no_anim", False)
+        or not sys.stdout.isatty()
+        or os.environ.get("CI") == "true"
+        or os.environ.get("TERM") == "dumb"
+        or "NO_COLOR" in os.environ
+    )
 
     is_compact = getattr(args, "compact", False)
     is_fancy = getattr(args, "fancy", False) or (
@@ -315,23 +431,41 @@ def main(argv: list[str] | None = None) -> int:
         is_interactive = (
             sys.stdin.isatty()
             and sys.stdout.isatty()
-            and not args.quiet
-            and args.format == "terminal"
+            and not getattr(args, "quiet", False)
+            and getattr(args, "format", "terminal") == "terminal"
             and not os.environ.get("CI")
             and not os.environ.get("ORVYEN_NO_INTERACTIVE")
         )
 
-    # Format handling
-    if args.format in ("terminal", "all"):
-        if not args.quiet:
-            if is_fancy and is_interactive:
-                os.system("cls" if os.name == "nt" else "clear")
-            ConsoleReporter.print_result(
-                result,
-                min_severity=min_sev,
-                compact=is_compact,
-                fancy=is_fancy,
-            )
+    min_sev = Severity[args.min_severity]
+    out_dir = Path(args.output_dir)
+
+    # Clear screen on startup if interactive
+    if is_interactive and sys.stdout.isatty():
+        os.system("cls" if os.name == "nt" else "clear")
+
+    # Execute Scan
+    if args.format in ("terminal", "all") and not args.quiet:
+        result, imda, owasp = execute_phased_scan(
+            target_path,
+            no_anim=no_anim,
+            quiet=False,
+            is_interactive=is_interactive,
+        )
+        ConsoleReporter.print_verdict(result, min_severity=min_sev)
+        ConsoleReporter.print_summary(result, imda, owasp, no_anim=no_anim)
+        ConsoleReporter.print_next_step(result, command_type="scan")
+    else:
+        engine = ScanEngine(target_path)
+        result = engine.run()
+        result.aibom = AIBOMCompiler.compile(result)
+
+    # If user just wants AIBOM
+    if args.aibom_only:
+        license_key = getattr(args, "license_key", None)
+        md_aibom = AIBOMCompiler.to_markdown(result.aibom, license_key=license_key)
+        print(md_aibom)
+        return 0
 
     if args.format != "terminal":
         try:
@@ -347,11 +481,11 @@ def main(argv: list[str] | None = None) -> int:
             if not args.quiet and args.format != "terminal":
                 print(f"[+] JSON report saved to: {json_path}")
 
-        if args.format in ("html", "all"):
-            html_path = out_dir / "orvyen_report.html"
-            HTMLReporter.write_to_file(result, html_path)
+        if args.format in ("sarif", "all"):
+            sarif_path = out_dir / "orvyen_report.sarif"
+            SARIFReporter.write_to_file(result, sarif_path)
             if not args.quiet and args.format != "terminal":
-                print(f"[+] HTML dashboard saved to: {html_path}")
+                print(f"[+] SARIF 2.1.0 report saved to: {sarif_path}")
 
         if args.format in ("aibom", "all"):
             aibom_json_path = out_dir / "aibom.json"
@@ -366,11 +500,15 @@ def main(argv: list[str] | None = None) -> int:
             if not args.quiet and args.format != "terminal":
                 print(f"[+] AIBOM artifacts saved to: {out_dir}")
 
-        if args.format in ("sarif", "all"):
-            sarif_path = out_dir / "orvyen_report.sarif"
-            SARIFReporter.write_to_file(result, sarif_path)
-            if not args.quiet and args.format != "terminal":
-                print(f"[+] SARIF 2.1.0 report saved to: {sarif_path}")
+        if args.format == "html":
+            license_key = getattr(args, "license_key", None)
+            if not is_valid_license(license_key):
+                print("Requires license: orvyen.com/pricing", file=sys.stderr)
+                return 1
+            html_path = out_dir / "orvyen_report.html"
+            HTMLReporter.write_to_file(result, html_path)
+            if not args.quiet:
+                print(f"[+] HTML dashboard saved to: {html_path}")
 
         if args.format == "pdf":
             license_key = getattr(args, "license_key", None)
@@ -381,15 +519,6 @@ def main(argv: list[str] | None = None) -> int:
             PDFReporter.write_to_file(result, pdf_path, license_key=license_key)
             if not args.quiet:
                 print(f"[+] PDF audit report saved to: {pdf_path}")
-        elif args.format == "all":
-            license_key = getattr(args, "license_key", None)
-            if is_valid_license(license_key):
-                pdf_path = out_dir / "orvyen_report.pdf"
-                PDFReporter.write_to_file(result, pdf_path, license_key=license_key)
-                if not args.quiet:
-                    print(f"[+] PDF audit report saved to: {pdf_path}")
-            elif not args.quiet:
-                print("[!] PDF audit report skipped (Requires license: orvyen.com/pricing)")
     except Exception as e:
         print(f"Error: Failed to write report artifacts to '{out_dir}': {e}", file=sys.stderr)
         return 1
@@ -399,13 +528,6 @@ def main(argv: list[str] | None = None) -> int:
         fail_threshold = Severity[args.fail_on]
         blocking_findings = [f for f in result.findings if f.severity >= fail_threshold]
         if blocking_findings:
-            sys.stdout.flush()
-            if not args.quiet:
-                print(
-                    f"\033[31m\033[1mScan FAILED: {len(blocking_findings)} violation(s) "
-                    f"at or above '{args.fail_on}' threshold.\033[0m",
-                    file=sys.stderr,
-                )
             if not is_interactive:
                 return 1
 
@@ -417,6 +539,7 @@ def main(argv: list[str] | None = None) -> int:
             is_compact=is_compact,
             is_fancy=is_fancy,
             license_key=getattr(args, "license_key", None),
+            no_anim=no_anim,
         )
 
     return 0
