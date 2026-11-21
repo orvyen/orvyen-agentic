@@ -18,7 +18,6 @@ from orvyen.compliance.imda_matrix import IMDAComplianceEvaluator
 from orvyen.compliance.owasp_matrix import OWASPComplianceEvaluator
 from orvyen.reporters.json_reporter import JSONReporter
 from orvyen.reporters.html_reporter import HTMLReporter
-from orvyen.reporters.pdf_reporter import PDFReporter
 from orvyen.reporters.sarif_reporter import SARIFReporter
 from orvyen.reporters.console import (
     ConsoleReporter,
@@ -66,10 +65,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     scan_parser.add_argument(
         "-f", "--format",
-        choices=["terminal", "json", "sarif", "aibom", "html", "pdf", "all"],
+        choices=["terminal", "json", "sarif", "aibom", "html", "all"],
         default="terminal",
         type=str.lower,
-        help="Output report format (default: terminal; CI/CD formats: json, sarif, aibom; Pro: pdf, html)",
+        help="Output report format (default: terminal; CI/CD formats: json, sarif, aibom; Pro: html)",
     )
     scan_parser.add_argument(
         "-o", "--output-dir",
@@ -130,7 +129,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--license-key",
         default=None,
         metavar="KEY",
-        help="Orvyen Pro license key (unlocks PDF and HTML report formats, and AIBOM Markdown clause mapping).",
+        help="Orvyen Pro license key (unlocks HTML report format and AIBOM Markdown clause mapping).",
     )
 
     return parser
@@ -509,16 +508,6 @@ def main(argv: list[str] | None = None) -> int:
             HTMLReporter.write_to_file(result, html_path)
             if not args.quiet:
                 print(f"[+] HTML dashboard saved to: {html_path}")
-
-        if args.format == "pdf":
-            license_key = getattr(args, "license_key", None)
-            if not is_valid_license(license_key):
-                print("Requires Orvyen Pro license key (--license-key).", file=sys.stderr)
-                return 1
-            pdf_path = out_dir / "orvyen_report.pdf"
-            PDFReporter.write_to_file(result, pdf_path, license_key=license_key)
-            if not args.quiet:
-                print(f"[+] PDF audit report saved to: {pdf_path}")
     except Exception as e:
         print(f"Error: Failed to write report artifacts to '{out_dir}': {e}", file=sys.stderr)
         return 1

@@ -10,7 +10,7 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![PyPI version](https://img.shields.io/pypi/v/orvyen-agentic.svg?color=blue)](https://pypi.org/project/orvyen-agentic/)
 [![npm version](https://img.shields.io/npm/v/@orvyen/agentic.svg?color=red)](https://www.npmjs.com/package/@orvyen/agentic)
-[![tests](https://img.shields.io/badge/tests-26%2F26-brightgreen.svg)](https://github.com/orvyen/orvyen-agentic)
+[![tests](https://img.shields.io/badge/tests-20%2F20-brightgreen.svg)](https://github.com/orvyen/orvyen-agentic)
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![OWASP LLM Top 10](https://img.shields.io/badge/OWASP-LLM_Top_10-orange)](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
 [![IMDA Governance](https://img.shields.io/badge/Singapore-IMDA_Agentic_AI_v1.5-green)](https://www.imda.gov.sg/)
@@ -97,7 +97,6 @@ python -m orvyen.cli scan ./my-agent-repo
 | SARIF 2.1.0 | `--format sarif` | For GitHub Advanced Security / CodeQL integration. |
 | AIBOM | `--format aibom` | Agent Bill of Materials in JSON and Markdown. |
 | All (free tier) | `--format all` | Produces JSON, SARIF, and AIBOM simultaneously. |
-| PDF *(Pro)* | `--format pdf` | Audit-grade PDF report. Requires a Pro license. |
 | HTML *(Pro)* | `--format html` | Interactive HTML dashboard. Requires a Pro license. |
 
 ```bash
@@ -106,9 +105,6 @@ orvyen-agentic scan . --format all --output-dir ./reports
 
 # Export SARIF only (for GitHub Advanced Security)
 orvyen-agentic scan . --format sarif --output-dir ./reports
-
-# Pro tier: generate a PDF audit report
-orvyen-agentic scan . --format pdf --license-key OAG-PRO.xxx --output-dir ./reports
 ```
 
 ### CI/CD Failure Gates
@@ -125,12 +121,12 @@ orvyen-agentic scan . --fail-on LOW
 
 | Flag | Description |
 | :--- | :--- |
-| `--format <fmt>` | Output format: `terminal`, `json`, `sarif`, `aibom`, `all`, `pdf`, `html` |
+| `--format <fmt>` | Output format: `terminal`, `json`, `sarif`, `aibom`, `all`, `html` |
 | `--output-dir <dir>` | Directory for file-based report output |
 | `--fail-on <severity>` | Exit 1 if any finding meets or exceeds this severity level |
 | `--no-anim` | Disable spinner animation (useful for CI/CD log output) |
 | `--no-interactive` | Non-interactive mode; disable prompt and slash-command menu |
-| `--license-key <key>` | Pro license key for PDF and HTML report formats |
+| `--license-key <key>` | Pro license key for HTML report format |
 
 ---
 
@@ -252,7 +248,7 @@ jobs:
 python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
-26 tests covering rule detection, AST parsing, MCP manifest inspection, compliance scoring, and reporter output.
+20 tests covering rule detection, AST parsing, MCP manifest inspection, compliance scoring, and reporter output.
 
 ---
 
